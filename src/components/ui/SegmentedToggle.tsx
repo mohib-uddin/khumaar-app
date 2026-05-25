@@ -1,14 +1,11 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
+import { useState } from 'react';
+import { Pressable, type LayoutChangeEvent } from 'react-native';
 
 import { Text } from '@/components/ui';
-import { brandGradientToggle, palette, radii, spacing, springs } from '@/theme';
+import { palette } from '@/theme';
+
+import { SegmentedTrack, type SegmentedLayout } from './SegmentedTrack';
+import { segmentedTrackStyles } from './SegmentedTrack';
 
 type Option<T extends string> = {
   value: T;
@@ -22,8 +19,6 @@ type Props<T extends string> = {
   accessibilityLabel?: string;
 };
 
-type Layout = { x: number; width: number };
-
 /**
  * Pill-shaped segmented control with a sliding gradient indicator.
  * Matches the "Today / This Week" toggle on the Routines screen.
@@ -34,23 +29,7 @@ export function SegmentedToggle<T extends string>({
   onChange,
   accessibilityLabel = 'Period selector',
 }: Props<T>) {
-  const [layouts, setLayouts] = useState<Record<string, Layout>>({});
-  const indicatorX = useSharedValue(0);
-  const indicatorW = useSharedValue(0);
-
-  const activeLayout = layouts[value];
-
-  useEffect(() => {
-    if (activeLayout) {
-      indicatorX.value = withSpring(activeLayout.x, springs.enter);
-      indicatorW.value = withSpring(activeLayout.width, springs.enter);
-    }
-  }, [activeLayout, indicatorX, indicatorW]);
-
-  const indicatorStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: indicatorX.value }],
-    width: indicatorW.value,
-  }));
+  const [layouts, setLayouts] = useState<Record<string, SegmentedLayout>>({});
 
   const onOptionLayout = (optionValue: string) => (e: LayoutChangeEvent) => {
     const { x, width } = e.nativeEvent.layout;
@@ -58,17 +37,9 @@ export function SegmentedToggle<T extends string>({
   };
 
   return (
-    <View style={styles.track} accessibilityRole="tablist" accessibilityLabel={accessibilityLabel}>
-      <Animated.View pointerEvents="none" style={[styles.indicatorWrap, indicatorStyle]}>
-        <LinearGradient
-          colors={[...brandGradientToggle.colors]}
-          locations={[...brandGradientToggle.locations]}
-          start={brandGradientToggle.start}
-          end={brandGradientToggle.end}
-          style={styles.indicator}
-        />
-      </Animated.View>
-
+    <SegmentedTrack
+      activeLayout={layouts[value]}
+      accessibilityLabel={accessibilityLabel}>
       {options.map((option) => {
         const selected = option.value === value;
         return (
@@ -80,7 +51,7 @@ export function SegmentedToggle<T extends string>({
             accessibilityState={{ selected }}
             accessibilityLabel={option.label}
             hitSlop={4}
-            style={styles.option}>
+            style={segmentedTrackStyles.option}>
             <Text
               variant={selected ? 'toggleActive' : 'toggleInactive'}
               color={selected ? palette.ink[900] : palette.white}
@@ -90,34 +61,6 @@ export function SegmentedToggle<T extends string>({
           </Pressable>
         );
       })}
-    </View>
+    </SegmentedTrack>
   );
 }
-
-const styles = StyleSheet.create({
-  track: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(47, 49, 49, 0.8)',
-    borderRadius: radii.pill,
-    padding: spacing.sm,
-    position: 'relative',
-  },
-  indicatorWrap: {
-    position: 'absolute',
-    top: spacing.sm,
-    bottom: spacing.sm,
-    left: 0,
-  },
-  indicator: {
-    flex: 1,
-    borderRadius: radii.pill,
-  },
-  option: {
-    height: 44,
-    paddingHorizontal: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
-  },
-});

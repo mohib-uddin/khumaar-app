@@ -24,5 +24,6 @@ export type SpacingToken = keyof typeof spacing;
 export const layout = {
   screenPaddingX: 20,
   screenContentMaxWidth: 720,
-  tabBarHeight: 84,
+  /** SegmentedTrack: spacing.sm * 2 + option height 44 */
+  tabBarHeight: 56,
 } as const;

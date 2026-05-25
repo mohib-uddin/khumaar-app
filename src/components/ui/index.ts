@@ -9,4 +9,5 @@ export { PressableScale } from './PressableScale';
 export { Screen } from './Screen';
 export { SegmentedProgressBar } from './SegmentedProgressBar';
 export { SegmentedToggle } from './SegmentedToggle';
+export { SegmentedTrack, segmentedTrackStyles, type SegmentedLayout } from './SegmentedTrack';
 export { Text, type TextProps } from './Text';

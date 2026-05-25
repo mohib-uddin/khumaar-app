@@ -44,7 +44,11 @@ export default function TabsLayout() {
   return (
     <Tabs
       tabBar={(props) => <AnimatedTabBar {...props} />}
-      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: palette.surface.canvas } }}>
+      screenOptions={{
+        headerShown: false,
+        tabBarShowLabel: false,
+        sceneStyle: { backgroundColor: palette.surface.canvas },
+      }}>
       <Tabs.Screen
         name="index"
         options={{
@@ -57,6 +61,7 @@ export default function TabsLayout() {
         options={{
           title: 'Routines',
           tabBarIcon: ({ color }) => <SparklesIcon color={color as string} />,
+          tabBarStyle: { display: 'none' },
         }}
       />
       <Tabs.Screen

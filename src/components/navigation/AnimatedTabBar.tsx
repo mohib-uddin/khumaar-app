@@ -1,107 +1,99 @@
-import { BlurView } from 'expo-blur';
-import { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Text } from '@/components/ui';
-import { palette, radii, shadows, springs } from '@/theme';
-import { useTheme } from '@/theme/ThemeProvider';
+import { SegmentedTrack, segmentedTrackStyles } from '@/components/ui/SegmentedTrack';
+import { palette, shadows, spacing } from '@/theme';
+import { tabBarDock } from '@/theme/tabBar';
+
+import { AgentOrb } from './AgentOrb';
 
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
+import type { SegmentedLayout } from '@/components/ui/SegmentedTrack';
 
 type TabIconRenderer = (props: { color: string; focused: boolean; size: number }) => React.ReactNode;
 
-type Layout = { x: number; width: number };
+/** Same as SegmentedToggle option row: padding sm + height 44 */
+const TAB_TRACK_HEIGHT = spacing.sm * 2 + 44;
+
+/**
+ * Bottom dock: Routines-style segmented pill (icons) + agent orb.
+ */
+const HIDDEN_TAB_BAR_ROUTES = new Set(['rituals']);
 
 export function AnimatedTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
-  const { name } = useTheme();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [layouts, setLayouts] = useState<Record<number, Layout>>({});
+  const [layouts, setLayouts] = useState<Record<number, SegmentedLayout>>({});
 
-  const indicatorX = useSharedValue(0);
-  const indicatorW = useSharedValue(0);
-
-  const focusedLayout = layouts[state.index];
-
-  useEffect(() => {
-    if (focusedLayout) {
-      indicatorX.value = withSpring(focusedLayout.x, springs.enter);
-      indicatorW.value = withSpring(focusedLayout.width, springs.enter);
-    }
-  }, [focusedLayout, indicatorX, indicatorW]);
-
-  const indicatorStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: indicatorX.value }],
-    width: indicatorW.value,
-  }));
+  const activeRouteName = state.routes[state.index]?.name;
+  if (activeRouteName && HIDDEN_TAB_BAR_ROUTES.has(activeRouteName)) {
+    return null;
+  }
 
   const onTabLayout = (index: number) => (e: LayoutChangeEvent) => {
     const { x, width } = e.nativeEvent.layout;
     setLayouts((prev) => ({ ...prev, [index]: { x, width } }));
   };
 
+  const openAgent = () => {
+    router.push('/analyze');
+  };
+
   return (
     <View
       pointerEvents="box-none"
-      style={[styles.host, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-      <BlurView
-        tint={name === 'dark' ? 'dark' : 'light'}
-        intensity={70}
-        style={styles.bar}>
-        <Animated.View
-          pointerEvents="none"
-          style={[styles.indicator, indicatorStyle, { backgroundColor: palette.ink[900] }]}
-        />
+      style={[styles.host, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+      <View style={styles.dock}>
+        <SegmentedTrack
+          activeLayout={layouts[state.index]}
+          accessibilityRole="tabbar"
+          accessibilityLabel="Main navigation"
+          style={styles.track}>
+          {state.routes.map((route, index) => {
+            const { options } = descriptors[route.key];
+            const focused = state.index === index;
 
-        {state.routes.map((route, index) => {
-          const { options } = descriptors[route.key];
-          const focused = state.index === index;
+            const onPress = () => {
+              const event = navigation.emit({
+                type: 'tabPress',
+                target: route.key,
+                canPreventDefault: true,
+              });
+              if (!focused && !event.defaultPrevented) {
+                navigation.navigate(route.name, route.params);
+              }
+            };
 
-          const onPress = () => {
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true,
-            });
-            if (!focused && !event.defaultPrevented) {
-              navigation.navigate(route.name, route.params);
-            }
-          };
+            const renderIcon = options.tabBarIcon as TabIconRenderer | undefined;
+            const label =
+              typeof options.tabBarLabel === 'string'
+                ? options.tabBarLabel
+                : (options.title ?? route.name);
 
-          const renderIcon = options.tabBarIcon as TabIconRenderer | undefined;
-          const label =
-            typeof options.tabBarLabel === 'string'
-              ? options.tabBarLabel
-              : (options.title ?? route.name);
+            const iconColor = focused ? palette.ink[900] : palette.white;
 
-          const color = focused ? '#FFFFFF' : palette.ink[700];
+            return (
+              <Pressable
+                key={route.key}
+                onPress={onPress}
+                onLayout={onTabLayout(index)}
+                accessibilityRole="tab"
+                accessibilityState={focused ? { selected: true } : {}}
+                accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
+                hitSlop={4}
+                style={segmentedTrackStyles.optionFill}>
+                {renderIcon
+                  ? renderIcon({ color: iconColor, focused, size: tabBarDock.iconSize })
+                  : null}
+              </Pressable>
+            );
+          })}
+        </SegmentedTrack>
 
-          return (
-            <Pressable
-              key={route.key}
-              onPress={onPress}
-              onLayout={onTabLayout(index)}
-              accessibilityRole="button"
-              accessibilityState={focused ? { selected: true } : {}}
-              accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
-              hitSlop={4}
-              style={styles.tab}>
-              {renderIcon ? renderIcon({ color, focused, size: 22 }) : null}
-              <Text
-                variant="captionMedium"
-                style={[styles.label, { color }]}
-                numberOfLines={1}>
-                {label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </BlurView>
+        <AgentOrb onPress={openAgent} />
+      </View>
     </View>
   );
 }
@@ -112,37 +104,18 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    paddingHorizontal: 20,
-    alignItems: 'center',
+    paddingHorizontal: tabBarDock.hostPaddingX,
+    zIndex: 100,
+    elevation: 24,
   },
-  bar: {
+  dock: {
     flexDirection: 'row',
-    width: '100%',
-    paddingHorizontal: 6,
-    paddingVertical: 6,
-    borderRadius: radii.pill,
     alignItems: 'center',
-    overflow: 'hidden',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    ...shadows.floating,
+    gap: tabBarDock.barAgentGap,
   },
-  indicator: {
-    position: 'absolute',
-    top: 6,
-    bottom: 6,
-    left: 0,
-    borderRadius: radii.pill,
-  },
-  tab: {
+  track: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-  },
-  label: {
-    fontSize: 13,
+    minHeight: TAB_TRACK_HEIGHT,
+    ...shadows.floating,
   },
 });

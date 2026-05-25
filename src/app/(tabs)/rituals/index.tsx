@@ -35,7 +35,7 @@ export default function RoutinesScreen() {
     setExpandedId((current) => (current === id ? null : id));
   };
 
-  const bottomInset = insets.bottom + layout.tabBarHeight + spacing.lg;
+  const bottomInset = insets.bottom + spacing['6xl'];
 
   return (
     <Screen edges={['top', 'left', 'right']}>
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: layout.screenPaddingX,
     right: layout.screenPaddingX,
-    bottom: layout.tabBarHeight - spacing.sm,
+    bottom: 0,
     alignItems: 'center',
   },
   toggleWrap: {
