@@ -1,0 +1,10 @@
+export { Acne } from './Acne';
+export { Bell } from './Bell';
+export { DotMarker } from './DotMarker';
+export { DoubleChin } from './DoubleChin';
+export { Lightning } from './Lightning';
+export { MagicWand } from './MagicWand';
+export { Oiliness } from './Oiliness';
+export { ScanFace } from './ScanFace';
+export { Sun } from './Sun';
+export type { IconProps } from './types';
