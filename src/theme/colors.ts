@@ -12,9 +12,18 @@ export const palette = {
     900: '#101010',
     700: '#2B2B2B',
     500: '#707070',
+    400: '#808080',
     300: '#A0A0A0',
     200: '#CCCCCC',
     100: '#E2E2E2',
+  },
+
+  border: {
+    light: '#EEEEEE',
+  },
+
+  track: {
+    muted: '#D9D9D9',
   },
 
   surface: {
@@ -35,6 +44,7 @@ export const palette = {
   accent: {
     success: '#1D956E',
     warning: '#FD6D2C',
+    warningSoft: 'rgba(253, 109, 44, 0.1)',
     info: '#5471FF',
   },
 } as const;

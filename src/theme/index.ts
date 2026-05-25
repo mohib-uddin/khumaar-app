@@ -18,3 +18,4 @@ export {
   type TypographyToken,
 } from './typography';
 export { durations, easings, springs, type DurationToken, type EasingToken } from './motion';
+export { brandGradient, brandGradientBar, brandGradientToggle, chipGradientActive } from './gradients';

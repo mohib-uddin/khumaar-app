@@ -1,5 +1,6 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Screen, Text } from '@/components/ui';
@@ -24,6 +25,7 @@ const enter = (index: number) =>
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   return (
     <Screen edges={['top', 'left', 'right']}>
@@ -36,7 +38,7 @@ export default function DashboardScreen() {
           { paddingBottom: insets.bottom + layout.tabBarHeight + spacing.xxxl },
         ]}>
         <Animated.View entering={enter(0)}>
-          <DashboardHeader />
+          <DashboardHeader onPressScan={() => router.push('/analyze')} />
         </Animated.View>
 
         <View style={styles.afterHeader}>

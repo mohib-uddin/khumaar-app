@@ -28,6 +28,15 @@ function RootStack() {
           animationDuration: 280,
         }}>
         <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
+        <Stack.Screen
+          name="analyze"
+          options={{
+            animation: 'slide_from_bottom',
+            animationDuration: 340,
+            gestureEnabled: true,
+            gestureDirection: 'vertical',
+          }}
+        />
       </Stack>
     </>
   );

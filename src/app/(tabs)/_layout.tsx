@@ -55,7 +55,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="rituals"
         options={{
-          title: 'Rituals',
+          title: 'Routines',
           tabBarIcon: ({ color }) => <SparklesIcon color={color as string} />,
         }}
       />

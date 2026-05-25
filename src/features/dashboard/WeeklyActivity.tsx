@@ -10,7 +10,7 @@ import Animated, {
 
 import { DotMarker } from '@/components/icons';
 import { Avatar, Text } from '@/components/ui';
-import { layout, palette, radii, shadows, spacing, springs } from '@/theme';
+import { brandGradientBar, layout, palette, radii, shadows, spacing, springs } from '@/theme';
 
 import { weeklyActivity } from './data';
 
@@ -21,12 +21,7 @@ const MAX_BAR_HEIGHT = 69;
 const SELECTED_GRADIENT_HEIGHT = 22;
 
 /** Figma node 5:261 — 178.4° linear gradient with explicit stops. */
-const SELECTED_BAR_GRADIENT = {
-  colors: [palette.brand[500], palette.brand[100], palette.brand[50]] as const,
-  locations: [0.1772, 0.59161, 1] as const,
-  start: { x: 0.486, y: 0 },
-  end: { x: 0.514, y: 1 },
-};
+const SELECTED_BAR_GRADIENT = brandGradientBar;
 const CHART_HEIGHT = 110;
 const DIVIDER_Y = 40;
 

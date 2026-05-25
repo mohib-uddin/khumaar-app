@@ -1,7 +1,12 @@
 export { Avatar } from './Avatar';
+export { AwarenessTag } from './AwarenessTag';
 export { Card } from './Card';
+export { ChipTabs } from './ChipTabs';
+export { GradientIconButton } from './GradientIconButton';
 export { IconButton } from './IconButton';
 export { Pill } from './Pill';
 export { PressableScale } from './PressableScale';
 export { Screen } from './Screen';
+export { SegmentedProgressBar } from './SegmentedProgressBar';
+export { SegmentedToggle } from './SegmentedToggle';
 export { Text, type TextProps } from './Text';

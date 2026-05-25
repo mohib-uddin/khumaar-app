@@ -1,10 +1,16 @@
 export { Acne } from './Acne';
+export { ArrowLeft } from './ArrowLeft';
 export { Bell } from './Bell';
+export { Check } from './Check';
+export { ChevronEnter } from './ChevronEnter';
+export { Close } from './Close';
 export { DotMarker } from './DotMarker';
 export { DoubleChin } from './DoubleChin';
 export { Lightning } from './Lightning';
 export { MagicWand } from './MagicWand';
 export { Oiliness } from './Oiliness';
+export { Plus } from './Plus';
 export { ScanFace } from './ScanFace';
 export { Sun } from './Sun';
+export { TonerStepIcon } from './TonerStepIcon';
 export type { IconProps } from './types';

@@ -93,6 +93,35 @@ export const typography = {
     fontSize: 16,
     lineHeight: 16,
   },
+  /** Routines — AI suggestion banner copy (13pt italic). */
+  bannerItalic: {
+    fontFamily: fontFamilies.italic,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  /** Routines — routine title inside cards (16pt medium). */
+  routineTitle: {
+    fontFamily: fontFamilies.medium,
+    fontSize: 16,
+    lineHeight: 19,
+  },
+  /** Routines — step title (14pt medium). */
+  stepTitle: {
+    fontFamily: fontFamilies.medium,
+    fontSize: 14,
+    lineHeight: 17,
+  },
+  /** Routines — toggle label (14pt semibold). */
+  toggleActive: {
+    fontFamily: fontFamilies.semibold,
+    fontSize: 14,
+    lineHeight: 17,
+  },
+  toggleInactive: {
+    fontFamily: fontFamilies.medium,
+    fontSize: 14,
+    lineHeight: 17,
+  },
 } as const satisfies Record<string, Variant>;
 
 export type TypographyToken = keyof typeof typography;
