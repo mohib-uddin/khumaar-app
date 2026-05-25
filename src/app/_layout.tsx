@@ -1,15 +1,4 @@
-import {
-  PlusJakartaSans_300Light,
-  PlusJakartaSans_300Light_Italic,
-  PlusJakartaSans_400Regular,
-  PlusJakartaSans_400Regular_Italic,
-  PlusJakartaSans_500Medium,
-  PlusJakartaSans_500Medium_Italic,
-  PlusJakartaSans_600SemiBold,
-  PlusJakartaSans_600SemiBold_Italic,
-  PlusJakartaSans_700Bold,
-  useFonts,
-} from '@expo-google-fonts/plus-jakarta-sans';
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -17,7 +6,7 @@ import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { palette } from '@/theme';
+import { lufgaFonts, palette } from '@/theme';
 import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
 
 import * as SplashScreen from 'expo-splash-screen';
@@ -45,17 +34,7 @@ function RootStack() {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
-    PlusJakarta_300Light: PlusJakartaSans_300Light,
-    PlusJakarta_300Light_Italic: PlusJakartaSans_300Light_Italic,
-    PlusJakarta_400Regular: PlusJakartaSans_400Regular,
-    PlusJakarta_400Regular_Italic: PlusJakartaSans_400Regular_Italic,
-    PlusJakarta_500Medium: PlusJakartaSans_500Medium,
-    PlusJakarta_500Medium_Italic: PlusJakartaSans_500Medium_Italic,
-    PlusJakarta_600SemiBold: PlusJakartaSans_600SemiBold,
-    PlusJakarta_600SemiBold_Italic: PlusJakartaSans_600SemiBold_Italic,
-    PlusJakarta_700Bold: PlusJakartaSans_700Bold,
-  });
+  const [fontsLoaded] = useFonts(lufgaFonts);
 
   useEffect(() => {
     if (fontsLoaded) {

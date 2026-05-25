@@ -19,6 +19,10 @@ type Props = {
    */
   gradient?: readonly [string, string, ...string[]];
   /**
+   * Optional color stop locations (0–1) for gradient pills.
+   */
+  gradientLocations?: readonly [number, number, ...number[]];
+  /**
    * Solid background. Ignored when `gradient` is provided.
    */
   background?: string;
@@ -34,6 +38,7 @@ export function Pill({
   paddingX = 10,
   paddingY = 6,
   gradient,
+  gradientLocations,
   background,
   style,
 }: Props) {
@@ -47,8 +52,9 @@ export function Pill({
     return (
       <LinearGradient
         colors={gradient}
-        start={{ x: 0.1, y: 0 }}
-        end={{ x: 0.9, y: 1 }}
+        locations={gradientLocations}
+        start={{ x: 0.08, y: 0.02 }}
+        end={{ x: 0.92, y: 0.98 }}
         style={[styles.center, sizing, style]}>
         {children}
       </LinearGradient>

@@ -19,6 +19,14 @@ const SMALL_AVATAR = require('@/assets/figma/avatars/profile-small.png');
 const BAR_GAP = 5;
 const MAX_BAR_HEIGHT = 69;
 const SELECTED_GRADIENT_HEIGHT = 22;
+
+/** Figma node 5:261 — 178.4° linear gradient with explicit stops. */
+const SELECTED_BAR_GRADIENT = {
+  colors: [palette.brand[500], palette.brand[100], palette.brand[50]] as const,
+  locations: [0.1772, 0.59161, 1] as const,
+  start: { x: 0.486, y: 0 },
+  end: { x: 0.514, y: 1 },
+};
 const CHART_HEIGHT = 110;
 const DIVIDER_Y = 40;
 
@@ -55,15 +63,20 @@ function ActivityBar({ height, highlighted, marker, label, index }: BarProps) {
         ]}>
         {highlighted ? (
           <LinearGradient
-            colors={[palette.brand[500], '#E1F5A3', '#F2FFCC']}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
+            colors={[...SELECTED_BAR_GRADIENT.colors]}
+            locations={[...SELECTED_BAR_GRADIENT.locations]}
+            start={SELECTED_BAR_GRADIENT.start}
+            end={SELECTED_BAR_GRADIENT.end}
             style={styles.barGradient}
           />
         ) : null}
         <Text
-          variant="overline"
-          style={[styles.barLabel, { color: highlighted ? '#FFFFFF' : palette.ink[500] }]}>
+          variant={highlighted ? 'caption' : 'overline'}
+          style={[
+            styles.barLabel,
+            highlighted && styles.barLabelActive,
+            { color: highlighted ? '#FFFFFF' : palette.ink[500] },
+          ]}>
           {label}
         </Text>
       </Animated.View>
@@ -167,10 +180,16 @@ const styles = StyleSheet.create({
   barLabel: {
     fontSize: 12,
   },
+  barLabelActive: {
+    lineHeight: 16,
+    letterSpacing: 0.6,
+  },
   markerAvatar: {
     marginBottom: 3,
   },
   caption: {
     marginTop: spacing.xxl,
+    // Must fit the inline 19px bodyEmphasis ("3X") without clipping.
+    lineHeight: 24,
   },
 });

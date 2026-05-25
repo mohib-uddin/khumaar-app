@@ -47,7 +47,11 @@ export function TargetPointsCard() {
 
         <View style={styles.timeline}>
           <View style={styles.activeColumn}>
-            <Pill paddingX={10} paddingY={6} gradient={[palette.brand[300], '#FCFFF4']}>
+            <Pill
+              paddingX={10}
+              paddingY={6}
+              gradient={[palette.brand[300], '#FCFFF4']}
+              gradientLocations={[0.020345, 0.98348]}>
               <Text variant="captionMedium" color={palette.ink[700]}>
                 Oiliness
               </Text>

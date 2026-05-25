@@ -28,6 +28,20 @@
     "plugins": [
       "expo-router",
       [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/lufga/Lufga-Light.ttf",
+            "./assets/fonts/lufga/Lufga-LightItalic.ttf",
+            "./assets/fonts/lufga/Lufga-Regular.ttf",
+            "./assets/fonts/lufga/Lufga-Italic.ttf",
+            "./assets/fonts/lufga/Lufga-Medium.ttf",
+            "./assets/fonts/lufga/Lufga-MediumItalic.ttf",
+            "./assets/fonts/lufga/Lufga-SemiBold.ttf"
+          ]
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#F4F1F2",

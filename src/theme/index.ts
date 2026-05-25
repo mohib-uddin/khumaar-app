@@ -7,6 +7,7 @@ export {
   palette,
   themes,
 } from './colors';
+export { lufgaFonts } from './fonts';
 export { layout, spacing, type SpacingToken } from './spacing';
 export { radii, type RadiusToken } from './radii';
 export { shadows, type ShadowToken } from './shadows';

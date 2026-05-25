@@ -1,20 +1,17 @@
 import type { TextStyle } from 'react-native';
 
 /**
- * Font family names as registered with `expo-font`. The Plus Jakarta Sans family
- * is used as a high-quality, free alternative to Lufga (the font used in the
- * source design) — the proportions and italic variants align very closely.
+ * Lufga family names as registered with expo-font (see src/theme/fonts.ts).
+ * Weights map 1:1 to the Figma text styles on the Home screen.
  */
 export const fontFamilies = {
-  light: 'PlusJakarta_300Light',
-  lightItalic: 'PlusJakarta_300Light_Italic',
-  regular: 'PlusJakarta_400Regular',
-  italic: 'PlusJakarta_400Regular_Italic',
-  medium: 'PlusJakarta_500Medium',
-  mediumItalic: 'PlusJakarta_500Medium_Italic',
-  semibold: 'PlusJakarta_600SemiBold',
-  semiboldItalic: 'PlusJakarta_600SemiBold_Italic',
-  bold: 'PlusJakarta_700Bold',
+  light: 'Lufga-Light',
+  lightItalic: 'Lufga-LightItalic',
+  regular: 'Lufga-Regular',
+  italic: 'Lufga-Italic',
+  medium: 'Lufga-Medium',
+  mediumItalic: 'Lufga-MediumItalic',
+  semibold: 'Lufga-SemiBold',
 } as const;
 
 export type FontFamilyToken = keyof typeof fontFamilies;
@@ -22,21 +19,18 @@ export type FontFamilyToken = keyof typeof fontFamilies;
 type Variant = TextStyle & { fontFamily: string };
 
 /**
- * Semantic typography tokens. Sizes mirror the Figma source. The `letterSpacing`
- * values are minor optical refinements that match the original art board.
+ * Semantic typography tokens. Sizes and line heights mirror the Figma Home frame.
  */
 export const typography = {
   displayLg: {
     fontFamily: fontFamilies.medium,
     fontSize: 30,
     lineHeight: 42,
-    letterSpacing: -0.4,
   },
   displaySm: {
     fontFamily: fontFamilies.lightItalic,
     fontSize: 22,
     lineHeight: 26,
-    letterSpacing: -0.2,
   },
   emphasizedItalic: {
     fontFamily: fontFamilies.mediumItalic,
