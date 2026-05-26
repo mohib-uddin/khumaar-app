@@ -9,8 +9,8 @@ import { tabBarDock } from '@/theme/tabBar';
 
 import { AgentOrb } from './AgentOrb';
 
-import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import type { SegmentedLayout } from '@/components/ui/SegmentedTrack';
+import type { BottomTabBarProps } from 'expo-router/js-tabs';
 
 type TabIconRenderer = (props: { color: string; focused: boolean; size: number }) => React.ReactNode;
 
@@ -38,7 +38,7 @@ export function AnimatedTabBar({ state, descriptors, navigation }: BottomTabBarP
   };
 
   const openAgent = () => {
-    router.push('/analyze');
+    router.push('/specialist');
   };
 
   return (

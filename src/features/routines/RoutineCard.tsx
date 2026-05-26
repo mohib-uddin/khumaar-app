@@ -17,9 +17,10 @@ type Props = {
   routine: Routine;
   expanded: boolean;
   onToggle: () => void;
+  onToggleStep: (stepId: string) => void;
 };
 
-function renderStep(step: RoutineStep) {
+function renderStep(step: RoutineStep, onToggleStep: (stepId: string) => void) {
   if (step.status === 'active' && step.howTo) {
     return (
       <Animated.View key={step.id} layout={LinearTransition.springify()}>
@@ -28,6 +29,8 @@ function renderStep(step: RoutineStep) {
           description={step.description}
           howToLabel={step.howTo.label}
           steps={step.howTo.steps}
+          completed={false}
+          onMarkComplete={() => onToggleStep(step.id)}
         />
       </Animated.View>
     );
@@ -35,7 +38,12 @@ function renderStep(step: RoutineStep) {
 
   return (
     <Animated.View key={step.id} layout={LinearTransition.springify()}>
-      <RoutineStepRow title={step.title} description={step.description} status={step.status} />
+      <RoutineStepRow
+        title={step.title}
+        description={step.description}
+        status={step.status}
+        onToggle={() => onToggleStep(step.id)}
+      />
     </Animated.View>
   );
 }
@@ -43,7 +51,7 @@ function renderStep(step: RoutineStep) {
 /**
  * Expandable routine card — collapsed pill or expanded card with step list.
  */
-export function RoutineCard({ routine, expanded, onToggle }: Props) {
+export function RoutineCard({ routine, expanded, onToggle, onToggleStep }: Props) {
   return (
     <Animated.View layout={LinearTransition.springify()}>
       <Card
@@ -64,7 +72,7 @@ export function RoutineCard({ routine, expanded, onToggle }: Props) {
             exiting={FadeOutUp.duration(220)}
             layout={LinearTransition.springify()}
             style={styles.steps}>
-            {routine.steps.map(renderStep)}
+            {routine.steps.map((step) => renderStep(step, onToggleStep))}
           </Animated.View>
         ) : null}
       </Card>

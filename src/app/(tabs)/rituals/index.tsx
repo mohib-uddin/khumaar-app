@@ -10,8 +10,11 @@ import {
   PeriodToggle,
   RoutineCard,
   RoutinesHeader,
+  applyStepOverrides,
+  nextStepStatus,
   routinesForPeriod,
   type Period,
+  type StepStatusOverrides,
 } from '@/features/routines';
 import { layout, spacing } from '@/theme';
 
@@ -28,11 +31,33 @@ export default function RoutinesScreen() {
   const [bannerVisible, setBannerVisible] = useState(true);
   const [period, setPeriod] = useState<Period>('today');
   const [expandedId, setExpandedId] = useState<string | null>('morning');
+  const [stepOverrides, setStepOverrides] = useState<Record<string, StepStatusOverrides>>({});
 
-  const routines = useMemo(() => routinesForPeriod(period), [period]);
+  const routines = useMemo(
+    () =>
+      routinesForPeriod(period).map((routine) =>
+        applyStepOverrides(routine, stepOverrides[routine.id]),
+      ),
+    [period, stepOverrides],
+  );
 
   const toggleRoutine = (id: string) => {
     setExpandedId((current) => (current === id ? null : id));
+  };
+
+  const toggleStep = (routineId: string, stepId: string) => {
+    setStepOverrides((prev) => {
+      const template = routinesForPeriod(period).find((r) => r.id === routineId);
+      const baseStep = template?.steps.find((s) => s.id === stepId);
+      const current = prev[routineId]?.[stepId] ?? baseStep?.status ?? 'pending';
+      return {
+        ...prev,
+        [routineId]: {
+          ...prev[routineId],
+          [stepId]: nextStepStatus(current),
+        },
+      };
+    });
   };
 
   const bottomInset = insets.bottom + spacing['6xl'];
@@ -60,6 +85,7 @@ export default function RoutinesScreen() {
                   routine={routine}
                   expanded={expandedId === routine.id}
                   onToggle={() => toggleRoutine(routine.id)}
+                  onToggleStep={(stepId) => toggleStep(routine.id, stepId)}
                 />
               </Animated.View>
             ))}

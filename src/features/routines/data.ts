@@ -160,3 +160,22 @@ export function routinesForPeriod(period: Period): Routine[] {
   // "Today" hides the weekly-only routine unless it's Sunday — simplified: show all daily routines.
   return allRoutines.filter((r) => r.id !== 'weekly');
 }
+
+export type StepStatusOverrides = Partial<Record<string, RoutineStepStatus>>;
+
+/** Merge user toggles onto the static routine template. */
+export function applyStepOverrides(routine: Routine, overrides?: StepStatusOverrides): Routine {
+  if (!overrides) return routine;
+  return {
+    ...routine,
+    steps: routine.steps.map((step) => ({
+      ...step,
+      status: overrides[step.id] ?? step.status,
+    })),
+  };
+}
+
+/** Tap cycles unchecked ↔ checked (active steps become completed). */
+export function nextStepStatus(current: RoutineStepStatus): RoutineStepStatus {
+  return current === 'completed' ? 'pending' : 'completed';
+}

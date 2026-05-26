@@ -28,6 +28,14 @@ export const brandGradientBar = {
   end: { x: 0.514, y: 1 },
 } as const;
 
+/** Warm canvas → soft lime wash for the Specialist hub hero. */
+export const specialistHubGradient = {
+  colors: ['#FFF9F0', '#F4F1F2', '#E8F5CC', '#F4F1F2'] as const,
+  locations: [0, 0.35, 0.65, 1] as const,
+  start: { x: 0.1, y: 0 },
+  end: { x: 0.9, y: 1 },
+} as const;
+
 /** ~166° — active chip on the Skin Analysis tab row. */
 export const chipGradientActive = {
   colors: [palette.brand[300], '#FCFFF4'] as const,

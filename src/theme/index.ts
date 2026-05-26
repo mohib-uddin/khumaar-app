@@ -6,7 +6,13 @@ export {
     themes
 } from './colors';
 export { lufgaFonts } from './fonts';
-export { brandGradient, brandGradientBar, brandGradientToggle, chipGradientActive } from './gradients';
+export {
+    brandGradient,
+    brandGradientBar,
+    brandGradientToggle,
+    chipGradientActive,
+    specialistHubGradient
+} from './gradients';
 export { durations, easings, springs, type DurationToken, type EasingToken } from './motion';
 export { radii, type RadiusToken } from './radii';
 export { shadows, type ShadowToken } from './shadows';

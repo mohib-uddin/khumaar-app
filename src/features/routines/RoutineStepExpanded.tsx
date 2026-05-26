@@ -1,9 +1,17 @@
 import { Image } from 'expo-image';
 import { StyleSheet, View } from 'react-native';
+import Animated, {
+  interpolate,
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
+import { useEffect } from 'react';
 
-import { TonerStepIcon } from '@/components/icons';
-import { Text } from '@/components/ui';
-import { palette, radii, spacing } from '@/theme';
+import { Check, TonerStepIcon } from '@/components/icons';
+import { PressableScale, Text } from '@/components/ui';
+import { palette, radii, spacing, springs } from '@/theme';
 
 import type { HowToStep } from './data';
 
@@ -12,18 +20,73 @@ type Props = {
   description: string;
   howToLabel: string;
   steps: HowToStep[];
+  completed?: boolean;
+  onMarkComplete?: () => void;
 };
 
 /**
  * Expanded active step with "How to do?" walkthrough — Figma node 0:476.
  */
-export function RoutineStepExpanded({ title, description, howToLabel, steps }: Props) {
+export function RoutineStepExpanded({
+  title,
+  description,
+  howToLabel,
+  steps,
+  completed = false,
+  onMarkComplete,
+}: Props) {
+  const progress = useSharedValue(completed ? 1 : 0);
+
+  useEffect(() => {
+    progress.value = withSpring(completed ? 1 : 0, springs.bounce);
+  }, [completed, progress]);
+
+  const toggleStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(
+      progress.value,
+      [0, 1],
+      [palette.white, palette.brand[300]],
+    ),
+    transform: [{ scale: interpolate(progress.value, [0, 0.6, 1], [1, 1.1, 1]) }],
+  }));
+
+  const checkStyle = useAnimatedStyle(() => ({
+    opacity: progress.value,
+    transform: [{ scale: interpolate(progress.value, [0, 1], [0.3, 1]) }],
+  }));
+
+  const tonerStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(progress.value, [0, 0.35], [1, 0]),
+    transform: [{ scale: interpolate(progress.value, [0, 1], [1, 0.6]) }],
+  }));
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.activeIcon}>
-          <TonerStepIcon size={48} />
-        </View>
+        {onMarkComplete ? (
+          <PressableScale
+            onPress={onMarkComplete}
+            pressedScale={0.88}
+            dim={false}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: completed }}
+            accessibilityLabel={`${completed ? 'Uncheck' : 'Complete'} ${title}`}
+            style={styles.activeIconHit}>
+            <Animated.View style={[styles.activeIcon, toggleStyle]}>
+              <Animated.View style={[styles.activeIconFill, tonerStyle]}>
+                <TonerStepIcon size={48} />
+              </Animated.View>
+              <Animated.View style={[styles.activeIconInner, checkStyle]}>
+                <Check size={26} color={palette.ink[900]} />
+              </Animated.View>
+            </Animated.View>
+          </PressableScale>
+        ) : (
+          <View style={styles.activeIcon}>
+            <TonerStepIcon size={48} />
+          </View>
+        )}
+
         <View style={styles.copy}>
           <Text variant="stepTitle" color="textPrimary">
             {title}
@@ -72,9 +135,23 @@ const styles = StyleSheet.create({
     paddingTop: spacing.base,
     paddingHorizontal: spacing.base,
   },
+  activeIconHit: {
+    borderRadius: radii.pill,
+  },
   activeIcon: {
     width: STEP_IMAGE,
     height: STEP_IMAGE,
+    borderRadius: radii.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  activeIconFill: {
+    ...StyleSheet.absoluteFill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeIconInner: {
     alignItems: 'center',
     justifyContent: 'center',
   },

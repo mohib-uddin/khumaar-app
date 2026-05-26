@@ -37,6 +37,15 @@ function RootStack() {
             gestureDirection: 'vertical',
           }}
         />
+        <Stack.Screen
+          name="specialist"
+          options={{
+            animation: 'slide_from_bottom',
+            animationDuration: 340,
+            gestureEnabled: true,
+            gestureDirection: 'vertical',
+          }}
+        />
       </Stack>
     </>
   );
