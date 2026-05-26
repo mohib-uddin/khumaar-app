@@ -5,10 +5,10 @@ import { AwarenessTag, ChipTabs, Text } from '@/components/ui';
 import { layout, palette, radii, spacing } from '@/theme';
 
 import {
-  analysisTabs,
-  awarenessTags,
-  symptomMetrics,
-  type AnalysisTab,
+    analysisTabs,
+    awarenessTags,
+    symptomMetrics,
+    type AnalysisTab,
 } from './data';
 import { SymptomMetricRow } from './SymptomMetricRow';
 

@@ -6,15 +6,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Screen } from '@/components/ui';
 import { HeaderBlur } from '@/features/dashboard';
 import {
-  AIBanner,
-  PeriodToggle,
-  RoutineCard,
-  RoutinesHeader,
-  applyStepOverrides,
-  nextStepStatus,
-  routinesForPeriod,
-  type Period,
-  type StepStatusOverrides,
+    AIBanner,
+    PeriodToggle,
+    RoutineCard,
+    RoutinesHeader,
+    applyStepOverrides,
+    nextStepStatus,
+    routinesForPeriod,
+    type Period,
+    type StepStatusOverrides,
 } from '@/features/routines';
 import { layout, spacing } from '@/theme';
 

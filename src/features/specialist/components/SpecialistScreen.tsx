@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 
 import { Screen } from '@/components/ui';
 import { HeaderBlur } from '@/features/dashboard';
@@ -9,8 +9,8 @@ import { palette } from '@/theme';
 import { useSpecialistSession } from '../hooks/useSpecialistSession';
 import { SpecialistChat } from './chat/SpecialistChat';
 import { SpecialistHub } from './hub/SpecialistHub';
-import { SpecialistComposer } from './SpecialistComposer';
 import { MockScanSheet } from './MockScanSheet';
+import { SpecialistComposer } from './SpecialistComposer';
 
 export function SpecialistScreen() {
   const router = useRouter();

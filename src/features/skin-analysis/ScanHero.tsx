@@ -1,14 +1,14 @@
 import { Image } from 'expo-image';
+import { useEffect } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
+    Easing,
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withSequence,
+    withTiming,
 } from 'react-native-reanimated';
-import { useEffect } from 'react';
 
 import { ScanFace } from '@/components/icons';
 import { palette, radii } from '@/theme';

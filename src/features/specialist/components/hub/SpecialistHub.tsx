@@ -3,11 +3,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MagicWand, ScanFace } from '@/components/icons';
 import { Text } from '@/components/ui';
-import { palette, layout, spacing } from '@/theme';
+import { layout, palette, spacing } from '@/theme';
 
 import { recentActivities } from '../../recentActivities';
-import { SpecialistOrbHero } from '../SpecialistOrbHero';
 import { SPECIALIST_COMPOSER_HEIGHT } from '../SpecialistComposer';
+import { SpecialistOrbHero } from '../SpecialistOrbHero';
 import { BriefMetricsStrip } from './BriefMetricsStrip';
 import { FeatureActionCard } from './FeatureActionCard';
 import { RecentActivityRow } from './RecentActivityRow';

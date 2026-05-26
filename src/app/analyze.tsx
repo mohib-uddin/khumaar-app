@@ -3,10 +3,10 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
-  AnalysisSheet,
-  AnalyzeHeader,
-  ScanHero,
-  type AnalysisTab,
+    AnalysisSheet,
+    AnalyzeHeader,
+    ScanHero,
+    type AnalysisTab,
 } from '@/features/skin-analysis';
 
 export default function AnalyzeScreen() {

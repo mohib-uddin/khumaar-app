@@ -1,7 +1,7 @@
 import {
-  blocksForCompare,
-  blocksForRoutine,
-  welcomeBlocks,
+    blocksForCompare,
+    blocksForRoutine,
+    welcomeBlocks,
 } from './sessions';
 
 export type RecentActivity = {
