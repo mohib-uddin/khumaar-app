@@ -1,9 +1,24 @@
 export type RoutineStepStatus = 'completed' | 'active' | 'pending';
 
+/** Skincare product steps vs. facial-exercise steps. */
+export type RoutineStepKind = 'skincare' | 'exercise';
+
 export type HowToStep = {
   id: string;
   image: number;
   caption: string;
+};
+
+export type FacialExercise = {
+  /** e.g. "5 min" or "3 × 15 reps". */
+  durationLabel: string;
+  /** Plain-language target, e.g. "Jawline". */
+  targetArea: string;
+  /** Step-by-step, gentle instructions. */
+  instructions: string[];
+  /** Locked exercises are gated behind consistency milestones. */
+  locked?: boolean;
+  unlockReason?: string;
 };
 
 export type RoutineStep = {
@@ -11,23 +26,26 @@ export type RoutineStep = {
   title: string;
   description: string;
   status: RoutineStepStatus;
+  kind?: RoutineStepKind;
   howTo?: {
     label: string;
     steps: HowToStep[];
   };
+  exercise?: FacialExercise;
 };
+
+export type RoutineIconKey = 'morning' | 'night' | 'facial-fitness' | 'weekly' | 'midday';
 
 export type Routine = {
   id: string;
   title: string;
   subtitle: string;
-  avatar: number;
+  icon: RoutineIconKey;
   steps: RoutineStep[];
 };
 
 export type Period = 'today' | 'week';
 
-const AVATAR = require('@/assets/figma/routines/morning-routine.png');
 const TONER_1 = require('@/assets/figma/routines/toner-step-1.png');
 const TONER_2 = require('@/assets/figma/routines/toner-step-2.png');
 const TONER_3 = require('@/assets/figma/routines/toner-step-3.png');
@@ -36,7 +54,7 @@ export const morningRoutine: Routine = {
   id: 'morning',
   title: 'Morning Routine',
   subtitle: '3 Steps · Everyday',
-  avatar: AVATAR,
+  icon: 'morning',
   steps: [
     {
       id: 'cleanser',
@@ -71,7 +89,7 @@ export const nightRoutine: Routine = {
   id: 'night',
   title: 'Night Routine',
   subtitle: '4 Steps · Everyday',
-  avatar: AVATAR,
+  icon: 'night',
   steps: [
     {
       id: 'makeup-remover',
@@ -104,7 +122,7 @@ export const weeklyRoutine: Routine = {
   id: 'weekly',
   title: 'Weekly Treatment',
   subtitle: '2 Steps · Every Sunday',
-  avatar: AVATAR,
+  icon: 'weekly',
   steps: [
     {
       id: 'exfoliant',
@@ -125,7 +143,7 @@ export const middayRoutine: Routine = {
   id: 'midday',
   title: 'Midday Refresh',
   subtitle: '2 Steps · As needed',
-  avatar: AVATAR,
+  icon: 'midday',
   steps: [
     {
       id: 'mist',
@@ -142,9 +160,72 @@ export const middayRoutine: Routine = {
   ],
 };
 
+export const facialFitnessRoutine: Routine = {
+  id: 'facial-fitness',
+  title: 'Facial Fitness',
+  subtitle: '3 Exercises · 4× / week',
+  icon: 'facial-fitness',
+  steps: [
+    {
+      id: 'jawline',
+      kind: 'exercise',
+      title: 'Jawline Definition',
+      description: 'Gentle resistance to tone the jaw and chin.',
+      status: 'active',
+      exercise: {
+        durationLabel: '5 min',
+        targetArea: 'Jawline',
+        instructions: [
+          'Sit tall and relax your shoulders.',
+          'Tilt your chin slightly upward.',
+          'Press your tongue to the roof of your mouth.',
+          'Hold for 10 seconds, then release. Repeat 10×.',
+        ],
+      },
+    },
+    {
+      id: 'neck-posture',
+      kind: 'exercise',
+      title: 'Neck Posture Reset',
+      description: 'Realign your neck and ease tech-neck tension.',
+      status: 'pending',
+      exercise: {
+        durationLabel: '3 min',
+        targetArea: 'Neck & posture',
+        instructions: [
+          'Stand or sit with a straight spine.',
+          'Gently tuck your chin to lengthen the neck.',
+          'Roll shoulders back and down.',
+          'Hold 15 seconds, breathe, repeat 6×.',
+        ],
+      },
+    },
+    {
+      id: 'eye-relax',
+      kind: 'exercise',
+      title: 'Eye Area Relaxation',
+      description: 'Soften tension and reduce puffiness.',
+      status: 'pending',
+      exercise: {
+        durationLabel: '2 min',
+        targetArea: 'Eye area',
+        instructions: [
+          'Warm your palms by rubbing them together.',
+          'Cup them gently over closed eyes.',
+          'Breathe slowly for 30 seconds.',
+          'Lightly tap around the orbital bone.',
+        ],
+        locked: true,
+        unlockReason: 'Complete 3 weekly scans to unlock',
+      },
+    },
+  ],
+};
+
 export const allRoutines: Routine[] = [
   morningRoutine,
   nightRoutine,
+  facialFitnessRoutine,
   weeklyRoutine,
   middayRoutine,
 ];
@@ -159,6 +240,17 @@ export function routinesForPeriod(period: Period): Routine[] {
   if (period === 'week') return allRoutines;
   // "Today" hides the weekly-only routine unless it's Sunday — simplified: show all daily routines.
   return allRoutines.filter((r) => r.id !== 'weekly');
+}
+
+/** Find an unlocked facial-exercise step by its route id. */
+export function exerciseStepById(stepId: string) {
+  for (const routine of allRoutines) {
+    const step = routine.steps.find((item) => item.id === stepId && item.kind === 'exercise');
+    if (step?.exercise) {
+      return { routine, step, exercise: step.exercise };
+    }
+  }
+  return null;
 }
 
 export type StepStatusOverrides = Partial<Record<string, RoutineStepStatus>>;

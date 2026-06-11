@@ -46,6 +46,15 @@ function RootStack() {
             gestureDirection: 'vertical',
           }}
         />
+        <Stack.Screen
+          name="products"
+          options={{
+            animation: 'slide_from_bottom',
+            animationDuration: 340,
+            gestureEnabled: true,
+            gestureDirection: 'vertical',
+          }}
+        />
       </Stack>
     </>
   );

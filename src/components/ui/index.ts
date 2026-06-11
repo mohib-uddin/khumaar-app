@@ -1,5 +1,6 @@
 export { Avatar } from './Avatar';
 export { AwarenessTag } from './AwarenessTag';
+export { Button } from './Button';
 export { Card } from './Card';
 export { ChipTabs } from './ChipTabs';
 export { GradientIconButton } from './GradientIconButton';

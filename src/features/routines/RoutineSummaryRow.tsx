@@ -7,15 +7,16 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ChevronEnter } from '@/components/icons';
-import { Avatar, PressableScale, Text } from '@/components/ui';
+import { PressableScale, Text } from '@/components/ui';
 import { palette, spacing, springs } from '@/theme';
 
-import type { ImageSource } from 'expo-image';
+import type { RoutineIconKey } from './data';
+import { RoutineIcon } from './RoutineIcon';
 
 type Props = {
   title: string;
   subtitle: string;
-  avatar: ImageSource | number;
+  icon: RoutineIconKey;
   expanded: boolean;
   onPress?: () => void;
 };
@@ -27,7 +28,7 @@ type Props = {
 export function RoutineSummaryRow({
   title,
   subtitle,
-  avatar,
+  icon,
   expanded,
   onPress,
 }: Props) {
@@ -48,7 +49,7 @@ export function RoutineSummaryRow({
       accessibilityLabel={`${title}, ${subtitle}. ${expanded ? 'Collapse' : 'Expand'}`}
       style={styles.row}>
       <View style={styles.leading}>
-        <Avatar source={avatar} size={64} ringWidth={0} />
+        <RoutineIcon icon={icon} />
         <View style={styles.copy}>
           <Text variant="routineTitle" color="textPrimary" numberOfLines={1}>
             {title}

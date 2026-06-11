@@ -199,9 +199,15 @@ export function blocksForCompare(): ConsultationBlock[] {
     {
       id: nextBlockId(),
       type: 'deep_link',
-      title: 'Detailed analysis',
-      subtitle: 'View symptom breakdown',
-      href: '/analyze',
+      title: 'Compare before / after',
+      subtitle: 'Latest scan vs previous scan',
+      href: {
+        pathname: '/scans/compare',
+        params: {
+          beforeId: 'scan-2026-05-28',
+          afterId: 'scan-2026-06-10',
+        },
+      },
     },
   ];
 }

@@ -1,26 +1,30 @@
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
-  interpolate,
-  interpolateColor,
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withSpring,
-  withTiming,
+    interpolate,
+    interpolateColor,
+    useAnimatedStyle,
+    useSharedValue,
+    withSequence,
+    withSpring,
+    withTiming,
 } from 'react-native-reanimated';
-import { useEffect } from 'react';
 
 import { Check } from '@/components/icons';
 import { PressableScale, Text } from '@/components/ui';
 import { palette, radii, spacing, springs } from '@/theme';
 
 import type { RoutineStepStatus } from './data';
+import { RoutineProductCta } from './RoutineProductCta';
 
 type Props = {
   title: string;
   description: string;
   status: RoutineStepStatus;
   onToggle: () => void;
+  productCategory?: string;
+  productPickCount?: number;
+  onOpenProducts?: () => void;
 };
 
 const STEP_ICON = 48;
@@ -28,7 +32,15 @@ const STEP_ICON = 48;
 /**
  * Compact routine step row — tappable check with spring + color morph.
  */
-export function RoutineStepRow({ title, description, status, onToggle }: Props) {
+export function RoutineStepRow({
+  title,
+  description,
+  status,
+  onToggle,
+  productCategory,
+  productPickCount,
+  onOpenProducts,
+}: Props) {
   const isCompleted = status === 'completed';
   const progress = useSharedValue(isCompleted ? 1 : 0);
   const burst = useSharedValue(0);
@@ -103,6 +115,15 @@ export function RoutineStepRow({ title, description, status, onToggle }: Props) 
           {description}
         </Text>
       </View>
+
+      {productCategory && onOpenProducts ? (
+        <RoutineProductCta
+          category={productCategory}
+          pickCount={productPickCount}
+          variant="compact"
+          onPress={onOpenProducts}
+        />
+      ) : null}
     </View>
   );
 }
@@ -139,5 +160,6 @@ const styles = StyleSheet.create({
   copy: {
     flex: 1,
     gap: spacing.xs,
+    minWidth: 0,
   },
 });

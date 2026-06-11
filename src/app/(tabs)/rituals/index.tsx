@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useMemo, useState, useSyncExternalStore } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,16 +7,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Screen } from '@/components/ui';
 import { HeaderBlur } from '@/features/dashboard';
 import {
-    AIBanner,
     PeriodToggle,
     RoutineCard,
+    RoutineProductSheet,
     RoutinesHeader,
     applyStepOverrides,
     nextStepStatus,
     routinesForPeriod,
     type Period,
+    type RoutineStep,
     type StepStatusOverrides,
 } from '@/features/routines';
+import { getStepOverrides, subscribeStepOverrides } from '@/features/routines/progress';
 import { layout, spacing } from '@/theme';
 
 const STAGGER = 90;
@@ -28,17 +31,28 @@ const enter = (index: number) =>
 
 export default function RoutinesScreen() {
   const insets = useSafeAreaInsets();
-  const [bannerVisible, setBannerVisible] = useState(true);
+  const router = useRouter();
   const [period, setPeriod] = useState<Period>('today');
   const [expandedId, setExpandedId] = useState<string | null>('morning');
+  const [productStep, setProductStep] = useState<Pick<RoutineStep, 'id' | 'title'> | null>(null);
+  const persistedOverrides = useSyncExternalStore(
+    subscribeStepOverrides,
+    getStepOverrides,
+    getStepOverrides,
+  );
   const [stepOverrides, setStepOverrides] = useState<Record<string, StepStatusOverrides>>({});
+
+  const mergedOverrides = useMemo(
+    () => ({ ...persistedOverrides, ...stepOverrides }),
+    [persistedOverrides, stepOverrides],
+  );
 
   const routines = useMemo(
     () =>
       routinesForPeriod(period).map((routine) =>
-        applyStepOverrides(routine, stepOverrides[routine.id]),
+        applyStepOverrides(routine, mergedOverrides[routine.id]),
       ),
-    [period, stepOverrides],
+    [period, mergedOverrides],
   );
 
   const toggleRoutine = (id: string) => {
@@ -60,6 +74,10 @@ export default function RoutinesScreen() {
     });
   };
 
+  const startExercise = (stepId: string) => {
+    router.push({ pathname: '/rituals/exercise/[id]', params: { id: stepId } });
+  };
+
   const bottomInset = insets.bottom + spacing['6xl'];
 
   return (
@@ -74,18 +92,20 @@ export default function RoutinesScreen() {
         </Animated.View>
 
         <View style={styles.afterHeader}>
-          <Animated.View entering={enter(1)}>
+          {/* <Animated.View entering={enter(1)}>
             <AIBanner visible={bannerVisible} onDismiss={() => setBannerVisible(false)} />
-          </Animated.View>
+          </Animated.View> */}
 
           <View style={styles.routineList}>
             {routines.map((routine, index) => (
-              <Animated.View key={routine.id} entering={enter(2 + index)}>
+              <Animated.View key={routine.id} entering={enter(1 + index)}>
                 <RoutineCard
                   routine={routine}
                   expanded={expandedId === routine.id}
                   onToggle={() => toggleRoutine(routine.id)}
                   onToggleStep={(stepId) => toggleStep(routine.id, stepId)}
+                  onStartExercise={startExercise}
+                  onOpenProducts={(step) => setProductStep({ id: step.id, title: step.title })}
                 />
               </Animated.View>
             ))}
@@ -96,7 +116,7 @@ export default function RoutinesScreen() {
       <View
         pointerEvents="box-none"
         style={[styles.bottomDock, { paddingBottom: insets.bottom + spacing.lg }]}>
-        <Animated.View entering={enter(2 + routines.length)} style={styles.toggleWrap}>
+        <Animated.View entering={enter(1 + routines.length)} style={styles.toggleWrap}>
           <PeriodToggle
             value={period}
             onChange={(next) => {
@@ -106,6 +126,12 @@ export default function RoutinesScreen() {
           />
         </Animated.View>
       </View>
+
+      <RoutineProductSheet
+        visible={Boolean(productStep)}
+        step={productStep}
+        onClose={() => setProductStep(null)}
+      />
     </Screen>
   );
 }

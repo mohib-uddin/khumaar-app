@@ -105,11 +105,11 @@ export function WeeklyActivity() {
       </View>
 
       <Text variant="body" color={palette.ink[300]} style={styles.caption}>
-        {'Your skin is improved '}
+        {'Your next AI scan is scheduled for '}
         <Text variant="bodyEmphasis" color={palette.accent.info}>
-          3X
+          Sat
         </Text>
-        {' from last 5 days.'}
+        {'. Keep the streak going.'}
       </Text>
     </View>
   );

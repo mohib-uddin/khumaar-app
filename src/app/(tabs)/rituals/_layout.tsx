@@ -12,6 +12,7 @@ export default function RitualsLayout() {
         animationDuration: 280,
       }}>
       <Stack.Screen name="index" />
+      <Stack.Screen name="exercise/[id]" />
     </Stack>
   );
 }

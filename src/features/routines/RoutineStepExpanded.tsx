@@ -1,19 +1,20 @@
 import { Image } from 'expo-image';
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
-  interpolate,
-  interpolateColor,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
+    interpolate,
+    interpolateColor,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
 } from 'react-native-reanimated';
-import { useEffect } from 'react';
 
 import { Check, TonerStepIcon } from '@/components/icons';
 import { PressableScale, Text } from '@/components/ui';
 import { palette, radii, spacing, springs } from '@/theme';
 
 import type { HowToStep } from './data';
+import { RoutineProductCta } from './RoutineProductCta';
 
 type Props = {
   title: string;
@@ -22,6 +23,9 @@ type Props = {
   steps: HowToStep[];
   completed?: boolean;
   onMarkComplete?: () => void;
+  productCategory?: string;
+  productPickCount?: number;
+  onOpenProducts?: () => void;
 };
 
 /**
@@ -34,6 +38,9 @@ export function RoutineStepExpanded({
   steps,
   completed = false,
   onMarkComplete,
+  productCategory,
+  productPickCount,
+  onOpenProducts,
 }: Props) {
   const progress = useSharedValue(completed ? 1 : 0);
 
@@ -94,6 +101,14 @@ export function RoutineStepExpanded({
           <Text variant="caption" color="textTertiary">
             {description}
           </Text>
+          {productCategory && onOpenProducts ? (
+            <RoutineProductCta
+              category={productCategory}
+              pickCount={productPickCount}
+              variant="expanded"
+              onPress={onOpenProducts}
+            />
+          ) : null}
         </View>
       </View>
 

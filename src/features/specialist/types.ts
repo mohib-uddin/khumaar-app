@@ -1,3 +1,5 @@
+import type { Href } from 'expo-router';
+
 import type { SymptomMetric } from '@/features/skin-analysis/data';
 
 export type TriageLevel = 'routine' | 'monitor' | 'dermatologist';
@@ -11,7 +13,7 @@ export type ConsultationBlock =
   | { id: string; type: 'scan_result'; metrics: SymptomMetric[]; summary: string }
   | { id: string; type: 'routine_suggestion'; changes: string[] }
   | { id: string; type: 'safety'; level: TriageLevel; message: string }
-  | { id: string; type: 'deep_link'; title: string; subtitle: string; href: '/analyze' | '/rituals' }
+  | { id: string; type: 'deep_link'; title: string; subtitle: string; href: Href }
   | { id: string; type: 'triage'; selected?: TriageLevel }
   | { id: string; type: 'typing' };
 

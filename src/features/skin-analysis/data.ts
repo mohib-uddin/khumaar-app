@@ -1,6 +1,6 @@
 import type { ProgressSegment } from '@/components/ui/SegmentedProgressBar';
 
-export type AnalysisTab = 'overview' | 'symptoms' | 'treatments' | 'special';
+export type AnalysisTab = 'overview' | 'symptoms' | 'ratios' | 'treatments' | 'special';
 
 export type SymptomMetric = {
   id: string;
@@ -13,6 +13,7 @@ export type SymptomMetric = {
 export const analysisTabs = [
   { value: 'overview' as const, label: 'Overview' },
   { value: 'symptoms' as const, label: 'Symptoms' },
+  { value: 'ratios' as const, label: 'Face' },
   { value: 'treatments' as const, label: 'Treatments' },
   { value: 'special' as const, label: 'Special' },
 ] as const;

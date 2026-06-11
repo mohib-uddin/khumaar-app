@@ -38,7 +38,11 @@ export default function DashboardScreen() {
           { paddingBottom: insets.bottom + layout.tabBarHeight + spacing.xxxl },
         ]}>
         <Animated.View entering={enter(0)}>
-          <DashboardHeader onPressScan={() => router.push('/analyze')} />
+          <DashboardHeader
+            onPressScan={() => router.push('/analyze')}
+            onPressMagic={() => router.push('/specialist')}
+            onPressAvatar={() => router.navigate('/profile')}
+          />
         </Animated.View>
 
         <View style={styles.afterHeader}>

@@ -1,23 +1,39 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { AwarenessTag, ChipTabs, Text } from '@/components/ui';
+import { ChipTabs } from '@/components/ui';
 import { layout, palette, radii, spacing } from '@/theme';
 
-import {
-    analysisTabs,
-    awarenessTags,
-    symptomMetrics,
-    type AnalysisTab,
-} from './data';
-import { SymptomMetricRow } from './SymptomMetricRow';
+import { analysisTabs, type AnalysisTab } from './data';
+import { OverviewPanel } from './OverviewPanel';
+import { RatiosPanel } from './RatiosPanel';
+import { SpecialPanel } from './SpecialPanel';
+import { SymptomsPanel } from './SymptomsPanel';
+import { TreatmentsPanel } from './TreatmentsPanel';
 
 type Props = {
   tab: AnalysisTab;
   onTabChange: (tab: AnalysisTab) => void;
 };
 
-/** Figma node 0:123 — bottom sheet panel with tabs and analysis content. */
+function ActivePanel({ tab }: { tab: AnalysisTab }) {
+  switch (tab) {
+    case 'overview':
+      return <OverviewPanel />;
+    case 'symptoms':
+      return <SymptomsPanel />;
+    case 'ratios':
+      return <RatiosPanel />;
+    case 'treatments':
+      return <TreatmentsPanel />;
+    case 'special':
+      return <SpecialPanel />;
+    default:
+      return null;
+  }
+}
+
+/** Figma node 0:123 — bottom sheet with tabs and per-tab analysis content. */
 export function AnalysisSheet({ tab, onTabChange }: Props) {
   return (
     <Animated.View entering={FadeInUp.duration(420).springify()} style={styles.sheet}>
@@ -27,49 +43,11 @@ export function AnalysisSheet({ tab, onTabChange }: Props) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         bounces={false}>
-        <Animated.View entering={FadeInDown.delay(60).springify()} style={styles.section}>
-          <ChipTabs options={analysisTabs} value={tab} onChange={onTabChange} />
+        <ChipTabs options={analysisTabs} value={tab} onChange={onTabChange} />
 
-          <View style={styles.heading}>
-            <Text variant="sectionTitle" color="textPrimary">
-              Detailed Analysis
-            </Text>
-            <Text variant="body" color="textTertiary">
-              Based on AI skin detection
-            </Text>
-          </View>
-
-          {tab === 'symptoms' ? (
-            <View style={styles.metrics}>
-              {symptomMetrics.map((metric, index) => (
-                <SymptomMetricRow key={metric.id} metric={metric} index={index} />
-              ))}
-            </View>
-          ) : (
-            <View style={styles.placeholder}>
-              <Text variant="body" color="textTertiary">
-                {tab === 'overview'
-                  ? 'Your overall skin health summary will appear here.'
-                  : tab === 'treatments'
-                    ? 'Recommended treatments based on your scan.'
-                    : 'Specialist recommendations for your skin type.'}
-              </Text>
-            </View>
-          )}
+        <Animated.View key={tab} entering={FadeInDown.duration(280).springify()}>
+          <ActivePanel tab={tab} />
         </Animated.View>
-
-        {tab === 'symptoms' ? (
-          <Animated.View entering={FadeInDown.delay(320).springify()} style={styles.awareSection}>
-            <Text variant="stepTitle" color="textPrimary">
-              Be aware
-            </Text>
-            <View style={styles.tags}>
-              {awarenessTags.map((tag) => (
-                <AwarenessTag key={tag} label={tag} />
-              ))}
-            </View>
-          </Animated.View>
-        ) : null}
       </ScrollView>
     </Animated.View>
   );
@@ -95,27 +73,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: layout.screenPaddingX,
     paddingTop: spacing.xxxl,
-    paddingBottom: spacing['6xl'],
-    gap: spacing['5xl'],
-  },
-  section: {
+    paddingBottom: spacing['7xl'],
     gap: spacing['4xl'],
-  },
-  heading: {
-    gap: spacing.base,
-  },
-  metrics: {
-    gap: spacing.xxl,
-  },
-  placeholder: {
-    paddingVertical: spacing.xxxl,
-  },
-  awareSection: {
-    gap: spacing.base,
-  },
-  tags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.base,
   },
 });

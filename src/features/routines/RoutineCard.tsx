@@ -1,13 +1,16 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Animated, {
-  FadeInDown,
-  FadeOutUp,
-  LinearTransition,
+    FadeInDown,
+    FadeOutUp,
+    LinearTransition,
 } from 'react-native-reanimated';
 
 import { Card } from '@/components/ui';
+import { getRoutineProductEntry } from '@/features/products';
 import { spacing } from '@/theme';
 
+import { ExerciseLockedRow } from './ExerciseLockedRow';
+import { RoutineExerciseExpanded } from './RoutineExerciseExpanded';
 import { RoutineStepExpanded } from './RoutineStepExpanded';
 import { RoutineStepRow } from './RoutineStepRow';
 import { RoutineSummaryRow } from './RoutineSummaryRow';
@@ -18,10 +21,47 @@ type Props = {
   expanded: boolean;
   onToggle: () => void;
   onToggleStep: (stepId: string) => void;
+  onStartExercise?: (stepId: string) => void;
+  onOpenProducts?: (step: RoutineStep) => void;
 };
 
-function renderStep(step: RoutineStep, onToggleStep: (stepId: string) => void) {
+function renderStep(
+  step: RoutineStep,
+  onToggleStep: (stepId: string) => void,
+  onStartExercise?: (stepId: string) => void,
+  onOpenProducts?: (step: RoutineStep) => void,
+) {
+  if (step.kind === 'exercise' && step.exercise) {
+    const { exercise } = step;
+
+    if (exercise.locked) {
+      return (
+        <Animated.View key={step.id} layout={LinearTransition.springify()}>
+          <ExerciseLockedRow
+            title={step.title}
+            unlockReason={exercise.unlockReason ?? 'Keep going to unlock'}
+          />
+        </Animated.View>
+      );
+    }
+
+    return (
+      <Animated.View key={step.id} layout={LinearTransition.springify()}>
+        <RoutineExerciseExpanded
+          title={step.title}
+          description={step.description}
+          exercise={exercise}
+          completed={step.status === 'completed'}
+          onMarkComplete={() => onToggleStep(step.id)}
+          onStartExercise={() => onStartExercise?.(step.id)}
+        />
+      </Animated.View>
+    );
+  }
+
   if (step.status === 'active' && step.howTo) {
+    const productEntry = getRoutineProductEntry(step.id);
+
     return (
       <Animated.View key={step.id} layout={LinearTransition.springify()}>
         <RoutineStepExpanded
@@ -31,10 +71,15 @@ function renderStep(step: RoutineStep, onToggleStep: (stepId: string) => void) {
           steps={step.howTo.steps}
           completed={false}
           onMarkComplete={() => onToggleStep(step.id)}
+          productCategory={productEntry?.category}
+          productPickCount={productEntry?.pickCount}
+          onOpenProducts={productEntry ? () => onOpenProducts?.(step) : undefined}
         />
       </Animated.View>
     );
   }
+
+  const productEntry = getRoutineProductEntry(step.id);
 
   return (
     <Animated.View key={step.id} layout={LinearTransition.springify()}>
@@ -43,6 +88,9 @@ function renderStep(step: RoutineStep, onToggleStep: (stepId: string) => void) {
         description={step.description}
         status={step.status}
         onToggle={() => onToggleStep(step.id)}
+        productCategory={productEntry?.category}
+        productPickCount={productEntry?.pickCount}
+        onOpenProducts={productEntry ? () => onOpenProducts?.(step) : undefined}
       />
     </Animated.View>
   );
@@ -51,7 +99,14 @@ function renderStep(step: RoutineStep, onToggleStep: (stepId: string) => void) {
 /**
  * Expandable routine card — collapsed pill or expanded card with step list.
  */
-export function RoutineCard({ routine, expanded, onToggle, onToggleStep }: Props) {
+export function RoutineCard({
+  routine,
+  expanded,
+  onToggle,
+  onToggleStep,
+  onStartExercise,
+  onOpenProducts,
+}: Props) {
   return (
     <Animated.View layout={LinearTransition.springify()}>
       <Card
@@ -61,7 +116,7 @@ export function RoutineCard({ routine, expanded, onToggle, onToggleStep }: Props
         <RoutineSummaryRow
           title={routine.title}
           subtitle={routine.subtitle}
-          avatar={routine.avatar}
+          icon={routine.icon}
           expanded={expanded}
           onPress={onToggle}
         />
@@ -72,7 +127,9 @@ export function RoutineCard({ routine, expanded, onToggle, onToggleStep }: Props
             exiting={FadeOutUp.duration(220)}
             layout={LinearTransition.springify()}
             style={styles.steps}>
-            {routine.steps.map((step) => renderStep(step, onToggleStep))}
+            {routine.steps.map((step) =>
+              renderStep(step, onToggleStep, onStartExercise, onOpenProducts),
+            )}
           </Animated.View>
         ) : null}
       </Card>
