@@ -222,10 +222,15 @@ export async function uploadScanPose(params: {
   if (!supabase) throw new Error('Supabase is not configured');
 
   const path = `${params.userId}/onboarding/${params.batchId}/${params.pose}.jpg`;
+  // RN fetch(fileUri).blob() often reports type text/plain; Storage rejects that.
+  // Upload raw bytes with an explicit JPEG content type instead.
   const response = await fetch(params.localUri);
-  const blob = await response.blob();
+  if (!response.ok) {
+    throw new Error(`Failed to read scan photo (${response.status})`);
+  }
+  const bytes = await response.arrayBuffer();
 
-  const { error: uploadError } = await supabase.storage.from('scan-photos').upload(path, blob, {
+  const { error: uploadError } = await supabase.storage.from('scan-photos').upload(path, bytes, {
     contentType: 'image/jpeg',
     upsert: true,
   });
