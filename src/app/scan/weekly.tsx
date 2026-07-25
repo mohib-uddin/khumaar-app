@@ -22,7 +22,7 @@ function createBatchId() {
 
 export default function WeeklyScanScreen() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<'scan' | 'upload' | 'analyze'>('scan');
 
@@ -45,6 +45,7 @@ export default function WeeklyScanScreen() {
       }
       setPhase('analyze');
       await invokeOnboardingAnalyze(batchId);
+      await refreshProfile();
       router.replace('/analyze');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Scan failed');

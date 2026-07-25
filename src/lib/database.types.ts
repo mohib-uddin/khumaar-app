@@ -58,6 +58,7 @@ export type ProfileRow = {
   onboarding_step: OnboardingStep;
   concerns: string[];
   skin_feel: SkinFeel | null;
+  fitzpatrick_type: number | null;
   terms_accepted_at: string | null;
   privacy_accepted_at: string | null;
   wellness_disclaimer_accepted_at: string | null;
@@ -78,6 +79,7 @@ export type ScanAnalysisRow = {
   ritual_id: string;
   disclaimer: string;
   routine_plan: RoutinePlan | null;
+  fitzpatrick_type: number | null;
   raw: Record<string, unknown> | null;
   created_at: string;
 };

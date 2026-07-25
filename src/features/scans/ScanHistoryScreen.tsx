@@ -60,7 +60,17 @@ export function ScanHistoryScreen() {
             </Text>
             <View style={styles.list}>
               {scans.map((scan, index) => (
-                <ScanHistoryRow key={scan.id} scan={scan} latest={index === 0} />
+                <ScanHistoryRow
+                  key={scan.id}
+                  scan={scan}
+                  latest={index === 0}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/analyze',
+                      params: { batchId: scan.id },
+                    })
+                  }
+                />
               ))}
             </View>
           </Animated.View>

@@ -9,9 +9,8 @@ import type { ScanRecord } from './types';
 
 type Props = {
   scan: ScanRecord;
-  compareTo?: ScanRecord;
   latest?: boolean;
-  onCompare?: (before: ScanRecord, after: ScanRecord) => void;
+  onPress?: () => void;
 };
 
 function formatDate(value: string) {
@@ -22,74 +21,65 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-/** Single scan-history row with thumbnail, score, and one-tap comparison. */
-export function ScanHistoryRow({ scan, compareTo, latest = false, onCompare }: Props) {
-  const canCompare = Boolean(compareTo && onCompare);
-
+/** Single scan-history row with thumbnail, score, and tap to view results. */
+export function ScanHistoryRow({ scan, latest = false, onPress }: Props) {
   return (
-    <Card style={styles.card}>
-      <View style={styles.row}>
-        <View style={styles.thumbWrap}>
-          <Image
-            source={scan.imageSource ?? { uri: scan.imageUri }}
-            style={styles.thumb}
-            contentFit="cover"
-            contentPosition="center"
-          />
-        </View>
-
-        <View style={styles.copy}>
-          <View style={styles.titleRow}>
-            <Text variant="stepTitle" color="textPrimary">
-              {latest ? 'Latest scan' : 'Skin scan'}
-            </Text>
-            {latest ? (
-              <Pill paddingX={8} paddingY={4} background={palette.brand[50]}>
-                <Text variant="metricSm" color={palette.brand[700]}>
-                  Latest
-                </Text>
-              </Pill>
-            ) : null}
+    <PressableScale
+      onPress={onPress}
+      dim={false}
+      pressedScale={0.98}
+      accessibilityRole="button"
+      accessibilityLabel={`View results for scan on ${formatDate(scan.capturedAt)}`}>
+      <Card style={styles.card}>
+        <View style={styles.row}>
+          <View style={styles.thumbWrap}>
+            <Image
+              source={scan.imageSource ?? { uri: scan.imageUri }}
+              style={styles.thumb}
+              contentFit="cover"
+              contentPosition="center"
+            />
           </View>
-          <Text variant="caption" color="textTertiary">
-            {formatDate(scan.capturedAt)}
-          </Text>
-          <Text variant="captionMedium" color={palette.accent.success}>
-            {scan.summary.statusLabel}
-          </Text>
+
+          <View style={styles.copy}>
+            <View style={styles.titleRow}>
+              <Text variant="stepTitle" color="textPrimary">
+                {latest ? 'Latest scan' : 'Skin scan'}
+              </Text>
+              {latest ? (
+                <Pill paddingX={8} paddingY={4} background={palette.brand[50]}>
+                  <Text variant="metricSm" color={palette.brand[700]}>
+                    Latest
+                  </Text>
+                </Pill>
+              ) : null}
+            </View>
+            <Text variant="caption" color="textTertiary">
+              {formatDate(scan.capturedAt)}
+            </Text>
+            <Text variant="captionMedium" color={palette.accent.success}>
+              {scan.summary.statusLabel}
+            </Text>
+          </View>
+
+          <View style={styles.scoreCol}>
+            <Text variant="metricLg" color="textPrimary">
+              {scan.summary.score}
+            </Text>
+            <Text variant="caption" color="textTertiary">
+              / {scan.summary.total}
+            </Text>
+          </View>
         </View>
 
-        <View style={styles.scoreCol}>
-          <Text variant="metricLg" color="textPrimary">
-            {scan.summary.score}
-          </Text>
-          <Text variant="caption" color="textTertiary">
-            / {scan.summary.total}
-          </Text>
-        </View>
-      </View>
-
-      {canCompare && compareTo ? (
-        <PressableScale
-          onPress={() => onCompare?.(compareTo, scan)}
-          dim={false}
-          pressedScale={0.98}
-          accessibilityRole="button"
-          accessibilityLabel={`Compare ${formatDate(compareTo.capturedAt)} to ${formatDate(scan.capturedAt)}`}
-          style={styles.compareRow}>
+        <View style={styles.footerRow}>
           <Text variant="captionMedium" color={palette.brand[700]}>
-            Compare with previous scan
+            View results
           </Text>
           <ChevronRight size={16} color={palette.brand[700]} />
-        </PressableScale>
-      ) : (
-        <View style={styles.baselineRow}>
-          <Text variant="caption" color="textTertiary">
-            Baseline scan
-          </Text>
         </View>
-      )}
-    </Card>
+      </Card>
+    </PressableScale>
   );
 }
 
@@ -127,17 +117,11 @@ const styles = StyleSheet.create({
   scoreCol: {
     alignItems: 'flex-end',
   },
-  compareRow: {
+  footerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
-    backgroundColor: palette.surface.sunken,
-    borderRadius: radii.pill,
-    paddingVertical: spacing.base,
-  },
-  baselineRow: {
-    alignItems: 'center',
     backgroundColor: palette.surface.sunken,
     borderRadius: radii.pill,
     paddingVertical: spacing.base,

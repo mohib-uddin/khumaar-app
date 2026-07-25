@@ -16,6 +16,7 @@ import { layout, spacing } from '@/theme';
 
 import { ProfileActions } from './ProfileActions';
 import { ProfileAnalysisSection } from './ProfileAnalysisSection';
+import { FitzpatrickScaleCard } from './FitzpatrickScaleCard';
 import { ProfileGreeting } from './ProfileGreeting';
 import { ProfileHeader } from './ProfileHeader';
 
@@ -117,12 +118,19 @@ export function ProfileScreen() {
             </Animated.View>
           </View>
 
+          <Animated.View entering={enter(4)}>
+            <FitzpatrickScaleCard
+              type={profile?.fitzpatrick_type ?? null}
+              onScan={!profile?.fitzpatrick_type ? openScan : undefined}
+            />
+          </Animated.View>
+
           {SHOW_PROFILE_ANALYSIS ? (
-            <Animated.View entering={enter(4)}>
+            <Animated.View entering={enter(5)}>
               <ProfileAnalysisSection onViewScans={openScans} />
             </Animated.View>
           ) : !analysis ? (
-            <Animated.View entering={enter(4)}>
+            <Animated.View entering={enter(5)}>
               <EmptyStateCard
                 title="Ready when you are"
                 caption="Complete a scan to unlock personalized metrics on your profile."
@@ -132,7 +140,7 @@ export function ProfileScreen() {
             </Animated.View>
           ) : null}
 
-          <Animated.View entering={enter(5)}>
+          <Animated.View entering={enter(6)}>
             <ProfileActions
               actions={[
                 {

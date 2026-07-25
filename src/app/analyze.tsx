@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -17,20 +17,51 @@ import {
 } from '@/features/skin-analysis/mapAnalysisMetrics';
 import { useFrontScanAvatar } from '@/features/dashboard/hooks/useFrontScanAvatar';
 import { useLatestAnalysis } from '@/features/dashboard/hooks/useLatestAnalysis';
+import { fetchAnalysisByBatchId, useAuth } from '@/features/onboarding';
+import type { ScanAnalysisRow } from '@/lib/database.types';
 
 const isAnalysisTab = (value: unknown): value is AnalysisTab =>
   typeof value === 'string' && analysisTabs.some((t) => t.value === value);
 
 export default function AnalyzeScreen() {
   const insets = useSafeAreaInsets();
-  const { tab: initialTab } = useLocalSearchParams<{ tab?: string }>();
+  const { user } = useAuth();
+  const { tab: initialTab, batchId } = useLocalSearchParams<{
+    tab?: string;
+    batchId?: string;
+  }>();
+  const targetBatchId = typeof batchId === 'string' && batchId.length > 0 ? batchId : null;
+
   const [tab, setTab] = useState<AnalysisTab>(
     isAnalysisTab(initialTab) &&
       (initialTab === 'overview' || initialTab === 'symptoms')
       ? initialTab
       : 'overview',
   );
-  const { analysis } = useLatestAnalysis();
+
+  const { analysis: latestAnalysis } = useLatestAnalysis();
+  const [batchAnalysis, setBatchAnalysis] = useState<ScanAnalysisRow | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!targetBatchId || !user?.id) {
+      setBatchAnalysis(null);
+      return;
+    }
+    void (async () => {
+      try {
+        const row = await fetchAnalysisByBatchId(user.id, targetBatchId);
+        if (!cancelled) setBatchAnalysis(row);
+      } catch {
+        if (!cancelled) setBatchAnalysis(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [targetBatchId, user?.id]);
+
+  const analysis = targetBatchId ? batchAnalysis : latestAnalysis;
   const imageUri = useFrontScanAvatar(analysis?.batch_id);
 
   const summary = useMemo(() => analysisToScanSummary(analysis), [analysis]);

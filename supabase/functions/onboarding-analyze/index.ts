@@ -14,6 +14,7 @@ Return ONLY valid JSON with this shape:
   "metrics": [{"id":"clarity"|"hydration"|"texture"|"redness"|"pigmentation"|"dark-circles"|"pores"|"oil","label":string,"value":string,"position":number 0-1,"tone":"good"|"average"|"improve"}],
   "ritual_id": "morning" | "night" | "facial-fitness",
   "disclaimer": string,
+  "fitzpatrick_type": number 1-6,
   "routine_plan": {
     "morning": {
       "title": string,
@@ -31,6 +32,7 @@ Rules:
 - Cosmetic wellness coaching only. Never diagnose, prescribe, or claim medical certainty.
 - Pick exactly ONE top_focus aligned with user concerns when possible.
 - Include 3-5 metrics.
+- Estimate fitzpatrick_type (I–VI phototype) from visible complexion in the scan photos under the lighting present — cosmetic estimate only, not a medical classification. If uncertain, choose the closest type.
 - routine_plan.focus_points must be exactly 3 items (one active, others done/pending).
 - morning and night each need 3-4 skincare steps with stable snake_case ids.
 - Keep tone calm and actionable.`;
@@ -76,8 +78,15 @@ type AnalysisPayload = {
   metrics: Metric[];
   ritual_id: string;
   disclaimer: string;
+  fitzpatrick_type: number;
   routine_plan: RoutinePlan;
 };
+
+function clampFitzpatrick(value: unknown, fallback = 3): number {
+  const n = Math.round(Number(value));
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(6, Math.max(1, n));
+}
 
 const METRIC_LABELS: Record<string, string> = {
   clarity: 'Clarity',
@@ -230,6 +239,10 @@ function normalizePayload(parsed: Partial<AnalysisPayload>, concerns: string[], 
     })),
     ritual_id,
     disclaimer: String(parsed.disclaimer || DISCLAIMER),
+    fitzpatrick_type: clampFitzpatrick(
+      parsed.fitzpatrick_type ?? heuristic.fitzpatrick_type,
+      heuristic.fitzpatrick_type,
+    ),
     routine_plan: basePlan,
   };
 }
@@ -320,6 +333,7 @@ function heuristicAnalysis(concerns: string[], skinFeel: string | null): Analysi
     ),
     ritual_id,
     disclaimer: DISCLAIMER,
+    fitzpatrick_type: 3,
     routine_plan: defaultRoutinePlan(focusLabel, ritual_id),
   };
 }
@@ -495,6 +509,7 @@ Deno.serve(async (req) => {
           ritual_id: payload.ritual_id,
           disclaimer: payload.disclaimer,
           routine_plan: payload.routine_plan,
+          fitzpatrick_type: payload.fitzpatrick_type,
           raw: payload,
         },
         { onConflict: 'batch_id' },
@@ -518,7 +533,10 @@ Deno.serve(async (req) => {
     if (profileStep?.onboarding_step === 'done') {
       await admin
         .from('profiles')
-        .update({ starter_ritual_id: payload.ritual_id })
+        .update({
+          starter_ritual_id: payload.ritual_id,
+          fitzpatrick_type: payload.fitzpatrick_type,
+        })
         .eq('id', user.id);
     } else {
       await admin
@@ -526,6 +544,7 @@ Deno.serve(async (req) => {
         .update({
           onboarding_step: 'results',
           starter_ritual_id: payload.ritual_id,
+          fitzpatrick_type: payload.fitzpatrick_type,
         })
         .eq('id', user.id);
     }

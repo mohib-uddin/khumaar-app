@@ -268,6 +268,8 @@ export async function invokeOnboardingAnalyze(batchId: string): Promise<ScanAnal
     ...analysis,
     metrics: (analysis.metrics ?? []) as AnalysisMetric[],
     routine_plan: (analysis.routine_plan ?? null) as RoutinePlan | null,
+    fitzpatrick_type:
+      typeof analysis.fitzpatrick_type === 'number' ? analysis.fitzpatrick_type : null,
   };
 }
 
@@ -287,6 +289,29 @@ export async function fetchLatestAnalysis(userId: string): Promise<ScanAnalysisR
     ...data,
     metrics: (data.metrics ?? []) as AnalysisMetric[],
     routine_plan: (data.routine_plan ?? null) as RoutinePlan | null,
+    fitzpatrick_type: typeof data.fitzpatrick_type === 'number' ? data.fitzpatrick_type : null,
+  };
+}
+
+export async function fetchAnalysisByBatchId(
+  userId: string,
+  batchId: string,
+): Promise<ScanAnalysisRow | null> {
+  const supabase = getSupabase();
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('scan_analyses')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('batch_id', batchId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    ...data,
+    metrics: (data.metrics ?? []) as AnalysisMetric[],
+    routine_plan: (data.routine_plan ?? null) as RoutinePlan | null,
+    fitzpatrick_type: typeof data.fitzpatrick_type === 'number' ? data.fitzpatrick_type : null,
   };
 }
 
