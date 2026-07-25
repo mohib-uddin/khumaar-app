@@ -15,6 +15,7 @@ Return ONLY valid JSON with this shape:
   "ritual_id": "morning" | "night" | "facial-fitness",
   "disclaimer": string,
   "fitzpatrick_type": number 1-6,
+  "skin_undertone": "cool" | "warm" | "neutral",
   "routine_plan": {
     "morning": {
       "title": string,
@@ -33,6 +34,7 @@ Rules:
 - Pick exactly ONE top_focus aligned with user concerns when possible.
 - Include 3-5 metrics.
 - Estimate fitzpatrick_type (I–VI phototype) from visible complexion in the scan photos under the lighting present — cosmetic estimate only, not a medical classification. If uncertain, choose the closest type.
+- Estimate skin_undertone as cool, warm, or neutral from visible complexion cues (e.g. pink/blue vs golden/peach vs balanced) — cosmetic style estimate only.
 - routine_plan.focus_points must be exactly 3 items (one active, others done/pending).
 - morning and night each need 3-4 skincare steps with stable snake_case ids.
 - Keep tone calm and actionable.`;
@@ -79,6 +81,7 @@ type AnalysisPayload = {
   ritual_id: string;
   disclaimer: string;
   fitzpatrick_type: number;
+  skin_undertone: 'cool' | 'warm' | 'neutral';
   routine_plan: RoutinePlan;
 };
 
@@ -86,6 +89,15 @@ function clampFitzpatrick(value: unknown, fallback = 3): number {
   const n = Math.round(Number(value));
   if (!Number.isFinite(n)) return fallback;
   return Math.min(6, Math.max(1, n));
+}
+
+function normalizeUndertone(
+  value: unknown,
+  fallback: 'cool' | 'warm' | 'neutral' = 'neutral',
+): 'cool' | 'warm' | 'neutral' {
+  const v = String(value ?? '').toLowerCase().trim();
+  if (v === 'cool' || v === 'warm' || v === 'neutral') return v;
+  return fallback;
 }
 
 const METRIC_LABELS: Record<string, string> = {
@@ -243,6 +255,10 @@ function normalizePayload(parsed: Partial<AnalysisPayload>, concerns: string[], 
       parsed.fitzpatrick_type ?? heuristic.fitzpatrick_type,
       heuristic.fitzpatrick_type,
     ),
+    skin_undertone: normalizeUndertone(
+      parsed.skin_undertone ?? heuristic.skin_undertone,
+      heuristic.skin_undertone,
+    ),
     routine_plan: basePlan,
   };
 }
@@ -334,6 +350,7 @@ function heuristicAnalysis(concerns: string[], skinFeel: string | null): Analysi
     ritual_id,
     disclaimer: DISCLAIMER,
     fitzpatrick_type: 3,
+    skin_undertone: 'neutral',
     routine_plan: defaultRoutinePlan(focusLabel, ritual_id),
   };
 }
@@ -510,6 +527,7 @@ Deno.serve(async (req) => {
           disclaimer: payload.disclaimer,
           routine_plan: payload.routine_plan,
           fitzpatrick_type: payload.fitzpatrick_type,
+          skin_undertone: payload.skin_undertone,
           raw: payload,
         },
         { onConflict: 'batch_id' },
@@ -536,6 +554,7 @@ Deno.serve(async (req) => {
         .update({
           starter_ritual_id: payload.ritual_id,
           fitzpatrick_type: payload.fitzpatrick_type,
+          skin_undertone: payload.skin_undertone,
         })
         .eq('id', user.id);
     } else {
@@ -545,6 +564,7 @@ Deno.serve(async (req) => {
           onboarding_step: 'results',
           starter_ritual_id: payload.ritual_id,
           fitzpatrick_type: payload.fitzpatrick_type,
+          skin_undertone: payload.skin_undertone,
         })
         .eq('id', user.id);
     }

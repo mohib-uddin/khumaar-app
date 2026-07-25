@@ -12,11 +12,14 @@ import {
   scoreStatus,
 } from '@/features/dashboard/hooks/useWeeklyActivityData';
 import { signOut, useAuth } from '@/features/onboarding';
+import { isStylePalette } from '@/lib/database.types';
 import { layout, spacing } from '@/theme';
 
+import { canUseColorStylist } from './canUseColorStylist';
+import { FashionCompatibilitySheet } from './FashionCompatibilitySheet';
+import { FitzpatrickScaleCard } from './FitzpatrickScaleCard';
 import { ProfileActions } from './ProfileActions';
 import { ProfileAnalysisSection } from './ProfileAnalysisSection';
-import { FitzpatrickScaleCard } from './FitzpatrickScaleCard';
 import { ProfileGreeting } from './ProfileGreeting';
 import { ProfileHeader } from './ProfileHeader';
 
@@ -35,9 +38,10 @@ const enter = (index: number) =>
 export function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { profile } = useAuth();
+  const { profile, refreshProfile, user } = useAuth();
   const { analysis } = useLatestAnalysis();
   const [signingOut, setSigningOut] = useState(false);
+  const [colorsOpen, setColorsOpen] = useState(false);
 
   const openScans = () => router.push('/scans');
   const openScan = () => router.push('/scan/weekly');
@@ -122,6 +126,11 @@ export function ProfileScreen() {
             <FitzpatrickScaleCard
               type={profile?.fitzpatrick_type ?? null}
               onScan={!profile?.fitzpatrick_type ? openScan : undefined}
+              onPressColors={
+                profile?.fitzpatrick_type && canUseColorStylist()
+                  ? () => setColorsOpen(true)
+                  : undefined
+              }
             />
           </Animated.View>
 
@@ -154,6 +163,22 @@ export function ProfileScreen() {
           </Animated.View>
         </View>
       </ScrollView>
+
+      <FashionCompatibilitySheet
+        visible={colorsOpen}
+        userId={user?.id ?? profile?.id}
+        gender={profile?.gender ?? null}
+        undertone={profile?.skin_undertone ?? null}
+        fitzpatrickType={profile?.fitzpatrick_type ?? null}
+        savedPalette={
+          profile?.style_palette && isStylePalette(profile.style_palette)
+            ? profile.style_palette
+            : null
+        }
+        onClose={() => setColorsOpen(false)}
+        onScan={!profile?.fitzpatrick_type ? openScan : undefined}
+        onPaletteSaved={refreshProfile}
+      />
     </Screen>
   );
 }

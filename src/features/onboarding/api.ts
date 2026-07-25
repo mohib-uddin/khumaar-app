@@ -6,8 +6,16 @@ import { Platform } from 'react-native';
 
 import { env } from '@/lib/env';
 import { getSupabase } from '@/lib/supabase';
-import type { OnboardingStep, ProfileRow, SkinFeel } from '@/lib/database.types';
-import type { AnalysisMetric, RoutinePlan, ScanAnalysisRow } from '@/lib/database.types';
+import type {
+  AnalysisMetric,
+  GenderPresentation,
+  OnboardingStep,
+  ProfileRow,
+  RoutinePlan,
+  ScanAnalysisRow,
+  SkinFeel,
+  StylePalette,
+} from '@/lib/database.types';
 import type { ScanPose } from '@/features/onboarding/constants';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -186,9 +194,27 @@ export async function saveConsents(userId: string) {
       privacy_accepted_at: now,
       wellness_disclaimer_accepted_at: now,
       photo_ai_consent_at: now,
-      onboarding_step: 'concerns',
+      onboarding_step: 'gender',
     })
     .eq('id', userId);
+  if (error) throw error;
+}
+
+export async function saveGender(
+  userId: string,
+  gender: GenderPresentation,
+  options?: { advanceStep?: boolean },
+) {
+  const supabase = getSupabase();
+  if (!supabase) throw new Error('Supabase is not configured');
+  const advanceStep = options?.advanceStep ?? true;
+  const patch: { gender: GenderPresentation; onboarding_step?: OnboardingStep } = {
+    gender,
+  };
+  if (advanceStep) {
+    patch.onboarding_step = 'concerns';
+  }
+  const { error } = await supabase.from('profiles').update(patch).eq('id', userId);
   if (error) throw error;
 }
 
@@ -270,6 +296,12 @@ export async function invokeOnboardingAnalyze(batchId: string): Promise<ScanAnal
     routine_plan: (analysis.routine_plan ?? null) as RoutinePlan | null,
     fitzpatrick_type:
       typeof analysis.fitzpatrick_type === 'number' ? analysis.fitzpatrick_type : null,
+    skin_undertone:
+      analysis.skin_undertone === 'cool' ||
+      analysis.skin_undertone === 'warm' ||
+      analysis.skin_undertone === 'neutral'
+        ? analysis.skin_undertone
+        : null,
   };
 }
 
@@ -290,6 +322,12 @@ export async function fetchLatestAnalysis(userId: string): Promise<ScanAnalysisR
     metrics: (data.metrics ?? []) as AnalysisMetric[],
     routine_plan: (data.routine_plan ?? null) as RoutinePlan | null,
     fitzpatrick_type: typeof data.fitzpatrick_type === 'number' ? data.fitzpatrick_type : null,
+    skin_undertone:
+      data.skin_undertone === 'cool' ||
+      data.skin_undertone === 'warm' ||
+      data.skin_undertone === 'neutral'
+        ? data.skin_undertone
+        : null,
   };
 }
 
@@ -312,6 +350,12 @@ export async function fetchAnalysisByBatchId(
     metrics: (data.metrics ?? []) as AnalysisMetric[],
     routine_plan: (data.routine_plan ?? null) as RoutinePlan | null,
     fitzpatrick_type: typeof data.fitzpatrick_type === 'number' ? data.fitzpatrick_type : null,
+    skin_undertone:
+      data.skin_undertone === 'cool' ||
+      data.skin_undertone === 'warm' ||
+      data.skin_undertone === 'neutral'
+        ? data.skin_undertone
+        : null,
   };
 }
 
@@ -323,6 +367,49 @@ export async function completeOnboarding(userId: string, ritualId: string) {
     .update({
       onboarding_step: 'done',
       starter_ritual_id: ritualId,
+    })
+    .eq('id', userId);
+  if (error) throw error;
+}
+
+export async function invokeStyleColors(variation?: number): Promise<StylePalette> {
+  const supabase = getSupabase();
+  if (!supabase) throw new Error('Supabase is not configured');
+
+  const { data, error } = await supabase.functions.invoke('style-colors', {
+    body: variation != null ? { variation } : {},
+  });
+
+  const payload = data as { palette?: StylePalette; error?: string; detail?: string } | null;
+  if (error) {
+    const detail = payload?.detail || payload?.error;
+    throw new Error(detail ? `${error.message}: ${detail}` : error.message);
+  }
+  if (!payload?.palette) throw new Error(payload?.error || 'Empty stylist palette');
+  return payload.palette;
+}
+
+export async function saveStylePalette(userId: string, palette: StylePalette) {
+  const supabase = getSupabase();
+  if (!supabase) throw new Error('Supabase is not configured');
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      style_palette: palette,
+      style_palette_updated_at: new Date().toISOString(),
+    })
+    .eq('id', userId);
+  if (error) throw error;
+}
+
+export async function clearStylePalette(userId: string) {
+  const supabase = getSupabase();
+  if (!supabase) throw new Error('Supabase is not configured');
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      style_palette: null,
+      style_palette_updated_at: null,
     })
     .eq('id', userId);
   if (error) throw error;

@@ -87,7 +87,7 @@ export default function ConsentScreen() {
     try {
       await saveConsents(user.id);
       await refreshProfile();
-      router.replace('/onboarding/concerns');
+      router.replace('/onboarding/gender');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save consent');
     } finally {
@@ -100,7 +100,7 @@ export default function ConsentScreen() {
       <OnboardingShell
         title="Before we scan"
         subtitle="Required for App Store–safe wellness coaching."
-        progress={<OnboardingProgress step={1} total={6} label="Consent" />}
+        progress={<OnboardingProgress step={1} total={7} label="Consent" />}
         footer={
           <>
             <Button

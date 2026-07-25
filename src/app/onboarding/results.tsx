@@ -62,7 +62,7 @@ export default function ResultsScreen() {
       <OnboardingShell
         title="Your coaching score"
         subtitle={analysis?.headline ?? 'Loading your coaching estimate…'}
-        progress={<OnboardingProgress step={5} total={6} label="Results" />}
+        progress={<OnboardingProgress step={6} total={7} label="Results" />}
         footer={
           analysis ? (
             <>

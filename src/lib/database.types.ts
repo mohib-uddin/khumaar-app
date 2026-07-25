@@ -2,6 +2,7 @@ export type OnboardingStep =
   | 'welcome'
   | 'auth'
   | 'consent'
+  | 'gender'
   | 'concerns'
   | 'feel'
   | 'prep'
@@ -11,6 +12,85 @@ export type OnboardingStep =
   | 'done';
 
 export type SkinFeel = 'dry' | 'oily' | 'combo' | 'sensitive';
+
+export type SkinUndertone = 'cool' | 'warm' | 'neutral';
+
+export type GenderPresentation =
+  | 'woman'
+  | 'man'
+  | 'nonbinary'
+  | 'prefer_not_to_say';
+
+export type StyleSwatch = {
+  id: string;
+  label: string;
+  hex: string;
+  why?: string;
+};
+
+export type StyleOccasionId = 'casual' | 'formal' | 'night_out';
+
+export type StyleOccasion = {
+  id: StyleOccasionId;
+  label: string;
+  colors: StyleSwatch[];
+};
+
+/** AI fashion stylist palette saved on the profile. */
+export type StylePalette = {
+  look_name: string;
+  blurb: string;
+  undertone_read: SkinUndertone;
+  hero: StyleSwatch;
+  occasions: StyleOccasion[];
+};
+
+const STYLE_OCCASION_IDS: StyleOccasionId[] = ['casual', 'formal', 'night_out'];
+
+function isStyleSwatch(value: unknown): value is StyleSwatch {
+  if (!value || typeof value !== 'object') return false;
+  const s = value as Record<string, unknown>;
+  return (
+    typeof s.id === 'string' &&
+    typeof s.label === 'string' &&
+    typeof s.hex === 'string' &&
+    /^#[0-9A-Fa-f]{6}$/.test(s.hex)
+  );
+}
+
+/** True when JSON matches the occasion-based StylePalette (rejects legacy accent packs). */
+export function isStylePalette(value: unknown): value is StylePalette {
+  if (!value || typeof value !== 'object') return false;
+  const p = value as Record<string, unknown>;
+  if (typeof p.look_name !== 'string' || typeof p.blurb !== 'string') return false;
+  if (
+    p.undertone_read !== 'cool' &&
+    p.undertone_read !== 'warm' &&
+    p.undertone_read !== 'neutral'
+  ) {
+    return false;
+  }
+  if (!isStyleSwatch(p.hero)) return false;
+  if (!Array.isArray(p.occasions) || p.occasions.length < 3) return false;
+
+  const ids = new Set<string>();
+  for (const raw of p.occasions) {
+    if (!raw || typeof raw !== 'object') return false;
+    const o = raw as Record<string, unknown>;
+    if (
+      o.id !== 'casual' &&
+      o.id !== 'formal' &&
+      o.id !== 'night_out'
+    ) {
+      return false;
+    }
+    if (typeof o.label !== 'string') return false;
+    if (!Array.isArray(o.colors) || o.colors.length < 1) return false;
+    if (!o.colors.every(isStyleSwatch)) return false;
+    ids.add(o.id);
+  }
+  return STYLE_OCCASION_IDS.every((id) => ids.has(id));
+}
 
 export type ScanView = 'front' | 'left' | 'right' | 'side';
 
@@ -58,7 +138,11 @@ export type ProfileRow = {
   onboarding_step: OnboardingStep;
   concerns: string[];
   skin_feel: SkinFeel | null;
+  gender: GenderPresentation | null;
   fitzpatrick_type: number | null;
+  skin_undertone: SkinUndertone | null;
+  style_palette: StylePalette | null;
+  style_palette_updated_at: string | null;
   terms_accepted_at: string | null;
   privacy_accepted_at: string | null;
   wellness_disclaimer_accepted_at: string | null;
@@ -80,6 +164,7 @@ export type ScanAnalysisRow = {
   disclaimer: string;
   routine_plan: RoutinePlan | null;
   fitzpatrick_type: number | null;
+  skin_undertone: SkinUndertone | null;
   raw: Record<string, unknown> | null;
   created_at: string;
 };

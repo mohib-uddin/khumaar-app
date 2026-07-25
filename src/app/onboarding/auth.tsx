@@ -59,7 +59,7 @@ export default function AuthScreen() {
       <OnboardingShell
         title="Sign in"
         subtitle="Save your scan and ritual. Apple is recommended on iPhone."
-        progress={<OnboardingProgress step={0} total={6} label="Account" />}
+        progress={<OnboardingProgress step={0} total={7} label="Account" />}
         footer={
           <View style={styles.footer}>
             {Platform.OS === 'ios' ? (

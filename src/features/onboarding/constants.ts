@@ -1,4 +1,4 @@
-import type { OnboardingStep, SkinFeel } from '@/lib/database.types';
+import type { GenderPresentation, OnboardingStep, SkinFeel } from '@/lib/database.types';
 
 export const CONCERN_OPTIONS = [
   { id: 'acne', label: 'Acne' },
@@ -12,6 +12,21 @@ export const CONCERN_OPTIONS = [
 ] as const;
 
 export type ConcernId = (typeof CONCERN_OPTIONS)[number]['id'];
+
+export const GENDER_OPTIONS: {
+  id: GenderPresentation;
+  label: string;
+  helper: string;
+}[] = [
+  { id: 'woman', label: 'Woman', helper: 'Feminine wardrobe guidance' },
+  { id: 'man', label: 'Man', helper: 'Masculine wardrobe guidance' },
+  { id: 'nonbinary', label: 'Nonbinary', helper: 'Gender-fluid wardrobe guidance' },
+  {
+    id: 'prefer_not_to_say',
+    label: 'Prefer not to say',
+    helper: 'Neutral wardrobe guidance',
+  },
+];
 
 export const SKIN_FEEL_OPTIONS: { id: SkinFeel; label: string; helper: string }[] = [
   { id: 'dry', label: 'Dry', helper: 'Tight or flaky after cleansing' },
@@ -56,6 +71,8 @@ export function routeForStep(step: OnboardingStep): string {
       return '/onboarding/auth';
     case 'consent':
       return '/onboarding/consent';
+    case 'gender':
+      return '/onboarding/gender';
     case 'concerns':
       return '/onboarding/concerns';
     case 'feel':

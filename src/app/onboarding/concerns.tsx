@@ -49,7 +49,7 @@ export default function ConcernsScreen() {
       <OnboardingShell
         title="What should we focus on?"
         subtitle={`Pick up to ${MAX_CONCERNS}. We’ll coach one primary focus after your scan.`}
-        progress={<OnboardingProgress step={2} total={6} label="About you" />}
+        progress={<OnboardingProgress step={3} total={7} label="About you" />}
         footer={
           <>
             <Button

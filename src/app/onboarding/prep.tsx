@@ -28,7 +28,7 @@ export default function PrepScreen() {
       <OnboardingShell
         title="Ready to scan"
         subtitle="Three quick photos. Cosmetic coaching only — not a diagnosis."
-        progress={<OnboardingProgress step={4} total={6} label="Scan" />}
+        progress={<OnboardingProgress step={5} total={7} label="Scan" />}
         footer={<Button label="Start scan" onPress={() => void start()} />}>
         <View style={styles.list}>
           {TIPS.map((tip) => (

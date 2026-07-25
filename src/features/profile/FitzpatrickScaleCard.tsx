@@ -8,12 +8,14 @@ import { FITZPATRICK_TYPES, getFitzpatrickMeta } from './fitzpatrick';
 type Props = {
   type: number | null | undefined;
   onScan?: () => void;
+  /** Opens fashion / color compatibility sheet when phototype is known. */
+  onPressColors?: () => void;
 };
 
 /**
  * Horizontal Fitzpatrick I–VI scale — Dashboard Card language, cosmetic estimate only.
  */
-export function FitzpatrickScaleCard({ type, onScan }: Props) {
+export function FitzpatrickScaleCard({ type, onScan, onPressColors }: Props) {
   const active = getFitzpatrickMeta(type);
 
   if (!active) {
@@ -85,6 +87,20 @@ export function FitzpatrickScaleCard({ type, onScan }: Props) {
           {active.cue}
         </Text>
       </View>
+
+      {onPressColors ? (
+        <View style={styles.ctaBlock}>
+          <Button
+            label="Get my personal color edit"
+            variant="secondary"
+            onPress={onPressColors}
+            fullWidth
+          />
+          <Text variant="caption" color={palette.ink[300]} style={styles.ctaCaption}>
+            Stylist palette for your phototype
+          </Text>
+        </View>
+      ) : null}
     </Card>
   );
 }
@@ -128,5 +144,11 @@ const styles = StyleSheet.create({
   activeRow: {
     gap: spacing.xxs,
     paddingTop: spacing.xs,
+  },
+  ctaBlock: {
+    gap: spacing.sm,
+  },
+  ctaCaption: {
+    textAlign: 'center',
   },
 });

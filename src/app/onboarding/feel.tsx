@@ -41,7 +41,7 @@ export default function FeelScreen() {
       <OnboardingShell
         title="How does your skin feel?"
         subtitle="One tap — helps tailor your starter ritual."
-        progress={<OnboardingProgress step={3} total={6} label="About you" />}
+        progress={<OnboardingProgress step={4} total={7} label="About you" />}
         footer={
           <>
             <Button

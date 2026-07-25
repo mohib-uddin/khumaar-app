@@ -51,7 +51,7 @@ export default function AnalyzingScreen() {
       <OnboardingShell
         title="Reading your scan"
         subtitle="Cosmetic coaching estimate — this usually takes a few seconds."
-        progress={<OnboardingProgress step={5} total={6} label="Analysis" />}
+        progress={<OnboardingProgress step={6} total={7} label="Analysis" />}
         footer={
           error ? (
             <Button label="Back to scan" onPress={() => router.replace('/onboarding/prep')} />
