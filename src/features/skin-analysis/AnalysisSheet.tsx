@@ -1,16 +1,18 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { ChipTabs } from '@/components/ui';
+import { ChipTabs, EmptyStateCard } from '@/components/ui';
 import type { ScanSummary, SkinMetric } from '@/features/skin-profile';
 import { layout, palette, radii, spacing } from '@/theme';
 
-import { analysisTabs, type AnalysisTab, type SymptomMetric } from './data';
+import {
+  analysisTabs,
+  comingSoonTabs,
+  type AnalysisTab,
+  type SymptomMetric,
+} from './data';
 import { OverviewPanel } from './OverviewPanel';
-import { RatiosPanel } from './RatiosPanel';
-import { SpecialPanel } from './SpecialPanel';
 import { SymptomsPanel } from './SymptomsPanel';
-import { TreatmentsPanel } from './TreatmentsPanel';
 
 type Props = {
   tab: AnalysisTab;
@@ -31,17 +33,20 @@ function ActivePanel({
   skinMetrics?: SkinMetric[];
   symptomMetrics?: SymptomMetric[];
 }) {
+  if (comingSoonTabs.includes(tab)) {
+    return (
+      <EmptyStateCard
+        title="Coming soon"
+        caption="Face ratios, treatments, and special insights are not live yet."
+      />
+    );
+  }
+
   switch (tab) {
     case 'overview':
       return <OverviewPanel summary={summary} metrics={skinMetrics} />;
     case 'symptoms':
       return <SymptomsPanel metrics={symptomMetrics} />;
-    case 'ratios':
-      return <RatiosPanel />;
-    case 'treatments':
-      return <TreatmentsPanel />;
-    case 'special':
-      return <SpecialPanel />;
     default:
       return null;
   }
@@ -55,6 +60,8 @@ export function AnalysisSheet({
   skinMetrics,
   symptomMetrics,
 }: Props) {
+  const safeTab = analysisTabs.some((t) => t.value === tab) ? tab : 'overview';
+
   return (
     <Animated.View entering={FadeInUp.duration(420).springify()} style={styles.sheet}>
       <View style={styles.handle} />
@@ -63,11 +70,15 @@ export function AnalysisSheet({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         bounces={false}>
-        <ChipTabs options={analysisTabs} value={tab} onChange={onTabChange} />
+        <ChipTabs
+          options={[...analysisTabs]}
+          value={safeTab}
+          onChange={onTabChange}
+        />
 
-        <Animated.View key={tab} entering={FadeInDown.duration(280).springify()}>
+        <Animated.View key={safeTab} entering={FadeInDown.duration(280).springify()}>
           <ActivePanel
-            tab={tab}
+            tab={safeTab}
             summary={summary}
             skinMetrics={skinMetrics}
             symptomMetrics={symptomMetrics}

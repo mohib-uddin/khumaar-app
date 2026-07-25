@@ -6,7 +6,6 @@ import { Card, Pill, Text } from '@/components/ui';
 import type { FocusPoint } from '@/lib/database.types';
 import { palette, radii } from '@/theme';
 
-import { targetPoints as defaultPoints } from './data';
 import { SkinProgressRow } from './SkinProgressRow';
 
 const ICON_SIZE = 30;
@@ -37,18 +36,16 @@ function DottedConnector() {
 }
 
 type Props = {
-  points?: FocusPoint[];
+  points: FocusPoint[];
 };
 
 /**
- * The big "Your Target Points" card. Contains the icon timeline at the top
- * and the inner "Skin" progress pill at the bottom.
+ * The big "Your Target Points" card. Requires live focus_points — no mock padding.
  */
-export function TargetPointsCard({ points = defaultPoints }: Props) {
-  const slots = [0, 1, 2].map(
-    (i) =>
-      points[i] ?? defaultPoints[i] ?? { key: `p${i}`, label: 'Focus', status: 'pending' as const },
-  );
+export function TargetPointsCard({ points }: Props) {
+  const slots = points.slice(0, 3);
+  if (slots.length < 3) return null;
+
   const active = slots.find((p) => p.status === 'active') ?? slots[1];
   const [left, , right] = slots;
 

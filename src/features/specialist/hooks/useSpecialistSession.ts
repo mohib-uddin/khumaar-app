@@ -2,12 +2,9 @@ import { useCallback, useRef, useState } from 'react';
 
 import { getSupabase } from '@/lib/supabase';
 
-import { recentActivities } from '../recentActivities';
 import {
   blocksForFlare,
   blocksForQuickIntent,
-  blocksForScanAnalyzing,
-  blocksForScanResult,
   blocksForTriage,
   nextBlockId,
   welcomeBlocks,
@@ -15,13 +12,17 @@ import {
 import type { ConsultationBlock, TriageLevel } from '../types';
 
 const TYPING_MS = 900;
-const SCAN_MS = 1600;
 const COACH_ERROR =
   'Could not reach the coach. Check your connection and try again.';
 
 export type SpecialistMode = 'hub' | 'chat';
 
 type HistoryTurn = { role: 'user' | 'assistant'; content: string };
+
+type CoachChatResult = {
+  reply: string;
+  threadId: string | null;
+};
 
 function historyFromBlocks(blocks: ConsultationBlock[]): HistoryTurn[] {
   const turns: HistoryTurn[] = [];
@@ -35,15 +36,28 @@ function historyFromBlocks(blocks: ConsultationBlock[]): HistoryTurn[] {
   return turns.slice(-8);
 }
 
-async function invokeCoachChat(message: string, history: HistoryTurn[]): Promise<string> {
+async function invokeCoachChat(
+  message: string,
+  history: HistoryTurn[],
+  threadId: string | null,
+): Promise<CoachChatResult> {
   const supabase = getSupabase();
   if (!supabase) throw new Error('Supabase is not configured');
 
   const { data, error } = await supabase.functions.invoke('coach-chat', {
-    body: { message, history },
+    body: {
+      message,
+      history,
+      ...(threadId ? { thread_id: threadId } : {}),
+    },
   });
 
-  const payload = data as { reply?: string; error?: string; detail?: string } | null;
+  const payload = data as {
+    reply?: string;
+    thread_id?: string;
+    error?: string;
+    detail?: string;
+  } | null;
   if (error) {
     const detail = payload?.detail || payload?.error;
     throw new Error(detail ? `${error.message}: ${detail}` : error.message);
@@ -51,7 +65,10 @@ async function invokeCoachChat(message: string, history: HistoryTurn[]): Promise
 
   const reply = payload?.reply?.trim();
   if (!reply) throw new Error(payload?.error || 'Empty coach reply');
-  return reply;
+  return {
+    reply,
+    threadId: typeof payload?.thread_id === 'string' ? payload.thread_id : threadId,
+  };
 }
 
 export function useSpecialistSession() {
@@ -59,10 +76,12 @@ export function useSpecialistSession() {
   const [chatTitle, setChatTitle] = useState('Khumaar Specialist');
   const [messages, setMessages] = useState<ConsultationBlock[]>([]);
   const [isTyping, setIsTyping] = useState(false);
-  const [scanSheetOpen, setScanSheetOpen] = useState(false);
+  const [threadId, setThreadId] = useState<string | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const messagesRef = useRef<ConsultationBlock[]>([]);
+  const threadIdRef = useRef<string | null>(null);
   messagesRef.current = messages;
+  threadIdRef.current = threadId;
 
   const clearTimers = useCallback(() => {
     timers.current.forEach(clearTimeout);
@@ -74,23 +93,22 @@ export function useSpecialistSession() {
     setIsTyping(false);
   }, []);
 
-  const enterChat = useCallback(
-    (title: string, initial?: ConsultationBlock[]) => {
-      setChatTitle(title);
-      setMode('chat');
-      setIsTyping(false);
-      if (initial) {
-        setMessages(initial);
-      } else if (messagesRef.current.length === 0) {
-        setMessages(welcomeBlocks());
-      }
-    },
-    [],
-  );
+  const enterChat = useCallback((title: string, initial?: ConsultationBlock[]) => {
+    setChatTitle(title);
+    setMode('chat');
+    setIsTyping(false);
+    if (initial) {
+      setMessages(initial);
+    } else if (messagesRef.current.length === 0) {
+      setMessages(welcomeBlocks());
+    }
+  }, []);
 
   const backToHub = useCallback(() => {
     setMode('hub');
     setIsTyping(false);
+    setThreadId(null);
+    threadIdRef.current = null;
     clearTimers();
   }, [clearTimers]);
 
@@ -118,7 +136,13 @@ export function useSpecialistSession() {
       setChatTitle(title);
       setMode('chat');
 
+      if (resetThread) {
+        setThreadId(null);
+        threadIdRef.current = null;
+      }
+
       const prior = resetThread ? [] : messagesRef.current;
+      const activeThread = resetThread ? null : threadIdRef.current;
       const history = historyFromBlocks(prior);
       const userBlock: ConsultationBlock = {
         id: nextBlockId(),
@@ -126,14 +150,22 @@ export function useSpecialistSession() {
         text: trimmed,
       };
 
-      setMessages([...prior.filter((m) => m.type !== 'typing'), userBlock, { id: nextBlockId(), type: 'typing' }]);
+      setMessages([
+        ...prior.filter((m) => m.type !== 'typing'),
+        userBlock,
+        { id: nextBlockId(), type: 'typing' },
+      ]);
       setIsTyping(true);
 
       try {
-        const reply = await invokeCoachChat(trimmed, history);
+        const result = await invokeCoachChat(trimmed, history, activeThread);
+        if (result.threadId) {
+          setThreadId(result.threadId);
+          threadIdRef.current = result.threadId;
+        }
         setMessages((prev) => [
           ...prev.filter((m) => m.type !== 'typing'),
-          { id: nextBlockId(), type: 'specialist', text: reply },
+          { id: nextBlockId(), type: 'specialist', text: result.reply },
         ]);
       } catch (error) {
         console.warn('Coach chat error', error);
@@ -199,38 +231,14 @@ export function useSpecialistSession() {
     [enterChat, respondWithBlocks, sendLive],
   );
 
-  const openFeatureScan = useCallback(() => {
-    setScanSheetOpen(true);
-  }, []);
-
-  const openFeatureRoutine = useCallback(() => {
-    void sendLive(
-      'Coach me on my morning and night routine for today.',
-      'Routine advisor',
-      true,
-    );
-  }, [sendLive]);
-
-  const openRecentActivity = useCallback(
-    (activityId: string) => {
-      const activity = recentActivities.find((a) => a.id === activityId);
-      if (!activity) return;
-      enterChat(activity.title, activity.loadBlocks());
+  const openCoachHistory = useCallback(
+    (title: string, blocks: ConsultationBlock[], nextThreadId: string) => {
+      setThreadId(nextThreadId);
+      threadIdRef.current = nextThreadId;
+      enterChat(title, blocks);
     },
     [enterChat],
   );
-
-  const startMockScan = useCallback(() => {
-    setScanSheetOpen(false);
-    enterChat('Skin scan');
-    appendBlocks(blocksForScanAnalyzing());
-
-    const t1 = setTimeout(() => {
-      setMessages((prev) => prev.filter((m) => m.type !== 'scan_analyzing'));
-      respondWithBlocks(blocksForScanResult(), 400);
-    }, SCAN_MS);
-    timers.current.push(t1);
-  }, [appendBlocks, enterChat, respondWithBlocks]);
 
   const selectTriage = useCallback(
     (level: TriageLevel) => {
@@ -247,18 +255,14 @@ export function useSpecialistSession() {
     chatTitle,
     messages,
     isTyping,
-    scanSheetOpen,
-    setScanSheetOpen,
+    threadId,
     enterChat,
     backToHub,
     sendBriefChip,
     startNewChat,
     sendUserText,
     runQuickIntent,
-    openFeatureScan,
-    openFeatureRoutine,
-    openRecentActivity,
-    startMockScan,
+    openCoachHistory,
     selectTriage,
     clearTimers,
   };

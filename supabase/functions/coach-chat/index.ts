@@ -220,6 +220,14 @@ Deno.serve(async (req) => {
           }))
       : [];
 
+    const uuidRe =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const incomingThread =
+      typeof body?.thread_id === 'string' ? body.thread_id.trim() : '';
+    const threadId = uuidRe.test(incomingThread)
+      ? incomingThread
+      : crypto.randomUUID();
+
     const { data: analysis } = await admin
       .from('scan_analyses')
       .select('overall_score, top_focus, headline, metrics, routine_plan')
@@ -252,8 +260,18 @@ Deno.serve(async (req) => {
     // Best-effort persistence — don't fail the chat if insert breaks
     try {
       await admin.from('coach_messages').insert([
-        { user_id: user.id, role: 'user', content: message.slice(0, 2000) },
-        { user_id: user.id, role: 'assistant', content: reply.slice(0, 4000) },
+        {
+          user_id: user.id,
+          thread_id: threadId,
+          role: 'user',
+          content: message.slice(0, 2000),
+        },
+        {
+          user_id: user.id,
+          thread_id: threadId,
+          role: 'assistant',
+          content: reply.slice(0, 4000),
+        },
       ]);
 
       const { data: rows } = await admin
@@ -272,7 +290,7 @@ Deno.serve(async (req) => {
       console.error('coach_messages persist failed', persistError);
     }
 
-    return new Response(JSON.stringify({ reply }), {
+    return new Response(JSON.stringify({ reply, thread_id: threadId }), {
       headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
     });
   } catch (error) {

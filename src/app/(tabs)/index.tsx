@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Screen, Text } from '@/components/ui';
+import { EmptyStateCard, Screen, Text } from '@/components/ui';
 import {
   DashboardHeader,
   EnvironmentCard,
@@ -40,11 +40,14 @@ export default function DashboardScreen() {
   const env = useEnvironment();
   const avatarUri = useFrontScanAvatar(analysis?.batch_id);
   const { days, nextScanLabel } = useWeeklyActivityData(analysis?.created_at);
+  const focusPoints = analysis?.routine_plan?.focus_points ?? [];
 
   const displayName =
     profile?.display_name?.split(' ')[0] ||
     profile?.display_name ||
     'there';
+
+  const openScan = () => router.push('/scan/weekly');
 
   return (
     <Screen edges={['top', 'left', 'right']}>
@@ -59,7 +62,7 @@ export default function DashboardScreen() {
         <Animated.View entering={enter(0)}>
           <DashboardHeader
             avatarUri={avatarUri}
-            onPressScan={() => router.push('/scan/weekly')}
+            onPressScan={openScan}
             onPressMagic={() => router.push('/specialist')}
             onPressAvatar={() => router.navigate('/profile')}
           />
@@ -88,27 +91,39 @@ export default function DashboardScreen() {
 
               <View style={styles.cardsBlock}>
                 <Animated.View style={styles.statRow} entering={enter(4)}>
-                  <SkinHealthCard
-                    {...(analysis
-                      ? {
-                          score: analysis.overall_score,
-                          updatedAt: relativeUpdatedLabel(analysis.created_at),
-                          status: scoreStatus(analysis.overall_score),
-                        }
-                      : {
-                          updatedAt: relativeUpdatedLabel(null),
-                          status: scoreStatus(null),
-                        })}
-                  />
+                  {analysis ? (
+                    <SkinHealthCard
+                      score={analysis.overall_score}
+                      updatedAt={relativeUpdatedLabel(analysis.created_at)}
+                      status={scoreStatus(analysis.overall_score)}
+                    />
+                  ) : (
+                    <EmptyStateCard
+                      compact
+                      title="Skin score"
+                      caption="Complete a scan to unlock your score."
+                    />
+                  )}
                   <EnvironmentCard
                     location={env.locationLabel}
                     status={env.status}
                     readings={env.readings}
+                    available={env.available}
+                    emptyCaption={env.emptyCaption}
                   />
                 </Animated.View>
 
                 <Animated.View entering={enter(5)}>
-                  <TargetPointsCard points={analysis?.routine_plan?.focus_points} />
+                  {focusPoints.length >= 3 ? (
+                    <TargetPointsCard points={focusPoints} />
+                  ) : (
+                    <EmptyStateCard
+                      title="Your target points"
+                      caption="Scan your skin to set three focus points for coaching."
+                      actionLabel="Start scan"
+                      onAction={openScan}
+                    />
+                  )}
                 </Animated.View>
               </View>
             </View>

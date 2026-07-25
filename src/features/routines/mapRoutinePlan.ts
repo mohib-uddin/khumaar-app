@@ -1,7 +1,6 @@
 import type { RoutinePlan } from '@/lib/database.types';
 
 import {
-  allRoutines,
   facialFitnessRoutine,
   middayRoutine,
   morningRoutine,
@@ -32,17 +31,26 @@ function blockToRoutine(
   };
 }
 
-/** Map persisted LLM plan onto existing Routine card shapes; keep fitness/weekly templates. */
+function withTemplateLabel(routine: Routine): Routine {
+  return {
+    ...routine,
+    subtitle: routine.subtitle
+      ? `${routine.subtitle} · Starter template`
+      : 'Starter template',
+  };
+}
+
+/** Map persisted LLM plan onto AM/PM + labeled starter templates. No plan → empty. */
 export function routinesFromPlan(plan: RoutinePlan | null | undefined): Routine[] {
   if (!plan?.morning?.steps?.length || !plan?.night?.steps?.length) {
-    return allRoutines;
+    return [];
   }
   return [
     blockToRoutine('morning', plan.morning, morningRoutine),
     blockToRoutine('night', plan.night, nightRoutine),
-    facialFitnessRoutine,
-    weeklyRoutine,
-    middayRoutine,
+    withTemplateLabel(facialFitnessRoutine),
+    withTemplateLabel(weeklyRoutine),
+    withTemplateLabel(middayRoutine),
   ];
 }
 

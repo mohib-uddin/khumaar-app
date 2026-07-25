@@ -1,18 +1,30 @@
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { Text } from '@/components/ui';
+import { EmptyStateCard, Text } from '@/components/ui';
 import { layout, radii, spacing } from '@/theme';
 
-import { briefChips } from '../../sessions';
+import type { BriefChip } from '../../types';
 
 type Props = {
+  chips: BriefChip[];
   onMetricPress: (prompt: string) => void;
+  emptyTitle?: string;
+  emptyCaption?: string;
 };
 
 const CHIP_WIDTH = 118;
 
-/** Horizontal skin-brief metrics — compact, tinted, swipeable. */
-export function BriefMetricsStrip({ onMetricPress }: Props) {
+/** Horizontal skin-brief metrics — live chips only; empty card when none. */
+export function BriefMetricsStrip({
+  chips,
+  onMetricPress,
+  emptyTitle = 'Personalized briefs',
+  emptyCaption = 'Scan first for personalized briefs.',
+}: Props) {
+  if (!chips.length) {
+    return <EmptyStateCard title={emptyTitle} caption={emptyCaption} />;
+  }
+
   return (
     <View style={styles.wrap}>
       <ScrollView
@@ -22,7 +34,7 @@ export function BriefMetricsStrip({ onMetricPress }: Props) {
         snapToInterval={CHIP_WIDTH + spacing.md}
         snapToAlignment="start"
         contentContainerStyle={styles.scroll}>
-        {briefChips.map((chip) => (
+        {chips.map((chip) => (
           <Pressable
             key={chip.id}
             onPress={() => onMetricPress(chip.prompt)}
@@ -38,7 +50,10 @@ export function BriefMetricsStrip({ onMetricPress }: Props) {
               <Text variant="caption" style={{ color: chip.labelColor }}>
                 {chip.label}
               </Text>
-              <Text variant="metric" style={[styles.value, { color: chip.valueColor }]} numberOfLines={1}>
+              <Text
+                variant="metric"
+                style={[styles.value, { color: chip.valueColor }]}
+                numberOfLines={1}>
                 {chip.value}
               </Text>
             </View>

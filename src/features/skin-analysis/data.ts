@@ -10,13 +10,13 @@ export type SymptomMetric = {
   segments: ProgressSegment[];
 };
 
+/** Live tabs only — Face / Treatments / Special stay in type for deep links but are gated. */
 export const analysisTabs = [
   { value: 'overview' as const, label: 'Overview' },
   { value: 'symptoms' as const, label: 'Symptoms' },
-  { value: 'ratios' as const, label: 'Face' },
-  { value: 'treatments' as const, label: 'Treatments' },
-  { value: 'special' as const, label: 'Special' },
 ] as const;
+
+export const comingSoonTabs: AnalysisTab[] = ['ratios', 'treatments', 'special'];
 
 /** Figma node 0:142 — symptom rows with exact segment weight ratios. */
 export const symptomMetrics: SymptomMetric[] = [

@@ -94,6 +94,7 @@ export type RoutineCompletionRow = {
 export type CoachMessageRow = {
   id: string;
   user_id: string;
+  thread_id: string;
   role: 'user' | 'assistant';
   content: string;
   created_at: string;
@@ -182,6 +183,7 @@ export type Database = {
         Insert: {
           id?: string;
           user_id: string;
+          thread_id?: string;
           role: 'user' | 'assistant';
           content: string;
           created_at?: string;

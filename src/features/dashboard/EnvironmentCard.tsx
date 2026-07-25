@@ -8,15 +8,20 @@ import type { EnvironmentReading } from './data';
 import { EnvironmentChart } from './EnvironmentChart';
 
 type Props = {
-  location?: string;
-  status?: string;
-  readings?: EnvironmentReading[];
+  location: string;
+  status: string;
+  readings: EnvironmentReading[];
+  /** When false, chart is omitted and caption explains why. */
+  available?: boolean;
+  emptyCaption?: string;
 };
 
 export function EnvironmentCard({
-  location = 'LA, California',
-  status = 'High UV',
+  location,
+  status,
   readings,
+  available = true,
+  emptyCaption = 'Allow location to see local UV.',
 }: Props) {
   return (
     <Card style={styles.card}>
@@ -29,11 +34,21 @@ export function EnvironmentCard({
         </Text>
       </View>
 
-      <EnvironmentChart readings={readings} />
+      {available ? (
+        <EnvironmentChart readings={readings} />
+      ) : (
+        <View style={styles.emptyBody}>
+          <Text variant="caption" color={palette.ink[300]} style={styles.emptyCaption}>
+            {emptyCaption}
+          </Text>
+        </View>
+      )}
 
       <View style={styles.statusRow}>
-        <Sun size={14} color={palette.accent.warning} />
-        <Text variant="captionMedium" color={palette.accent.warning}>
+        <Sun size={14} color={available ? palette.accent.warning : palette.ink[300]} />
+        <Text
+          variant="captionMedium"
+          color={available ? palette.accent.warning : palette.ink[300]}>
           {status}
         </Text>
       </View>
@@ -52,6 +67,14 @@ const styles = StyleSheet.create({
   },
   heading: {
     gap: spacing.xs,
+  },
+  emptyBody: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
+  },
+  emptyCaption: {
+    lineHeight: 16,
   },
   statusRow: {
     flexDirection: 'row',

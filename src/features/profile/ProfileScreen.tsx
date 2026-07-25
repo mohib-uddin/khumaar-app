@@ -4,17 +4,23 @@ import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Screen, Text } from '@/components/ui';
+import { EmptyStateCard, Screen, Text } from '@/components/ui';
 import { HeaderBlur, SkinHealthCard } from '@/features/dashboard';
+import { useLatestAnalysis } from '@/features/dashboard/hooks/useLatestAnalysis';
+import {
+  relativeUpdatedLabel,
+  scoreStatus,
+} from '@/features/dashboard/hooks/useWeeklyActivityData';
 import { signOut, useAuth } from '@/features/onboarding';
-import { facialRatios, scanSummary } from '@/features/skin-profile';
 import { layout, spacing } from '@/theme';
 
-import { HarmonyScoreCard } from './HarmonyScoreCard';
 import { ProfileActions } from './ProfileActions';
 import { ProfileAnalysisSection } from './ProfileAnalysisSection';
 import { ProfileGreeting } from './ProfileGreeting';
 import { ProfileHeader } from './ProfileHeader';
+
+/** Hidden until facial-ratio analysis ships — section module kept. */
+const SHOW_PROFILE_ANALYSIS = false;
 
 const STAGGER = 90;
 
@@ -24,14 +30,16 @@ const enter = (index: number) =>
     .springify()
     .damping(16);
 
-/** Profile — dashboard-aligned skin metrics and tabbed analysis. */
+/** Profile — dashboard-aligned skin metrics; analysis section gated off. */
 export function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { profile } = useAuth();
+  const { analysis } = useLatestAnalysis();
   const [signingOut, setSigningOut] = useState(false);
 
   const openScans = () => router.push('/scans');
+  const openScan = () => router.push('/scan/weekly');
   const displayName =
     profile?.display_name?.split(' ')[0] || profile?.display_name || 'there';
 
@@ -88,24 +96,41 @@ export function ProfileScreen() {
             </Animated.View>
 
             <Animated.View style={styles.statRow} entering={enter(3)}>
-              <SkinHealthCard
-                score={scanSummary.score}
-                total={scanSummary.total}
-                updatedAt={scanSummary.capturedLabel}
-                status={scanSummary.statusLabel}
-              />
-              <HarmonyScoreCard
-                score={facialRatios.score.overall}
-                total={facialRatios.score.max}
-                updatedAt="Front & side"
-                status={facialRatios.score.percentileLabel}
+              {analysis ? (
+                <SkinHealthCard
+                  score={analysis.overall_score}
+                  updatedAt={relativeUpdatedLabel(analysis.created_at)}
+                  status={scoreStatus(analysis.overall_score)}
+                />
+              ) : (
+                <EmptyStateCard
+                  compact
+                  title="Skin score"
+                  caption="Complete a scan to see your metrics."
+                />
+              )}
+              <EmptyStateCard
+                compact
+                title="Facial harmony"
+                caption="Coming soon after face-ratio analysis ships."
               />
             </Animated.View>
           </View>
 
-          <Animated.View entering={enter(4)}>
-            <ProfileAnalysisSection onViewScans={openScans} />
-          </Animated.View>
+          {SHOW_PROFILE_ANALYSIS ? (
+            <Animated.View entering={enter(4)}>
+              <ProfileAnalysisSection onViewScans={openScans} />
+            </Animated.View>
+          ) : !analysis ? (
+            <Animated.View entering={enter(4)}>
+              <EmptyStateCard
+                title="Ready when you are"
+                caption="Complete a scan to unlock personalized metrics on your profile."
+                actionLabel="Start scan"
+                onAction={openScan}
+              />
+            </Animated.View>
+          ) : null}
 
           <Animated.View entering={enter(5)}>
             <ProfileActions

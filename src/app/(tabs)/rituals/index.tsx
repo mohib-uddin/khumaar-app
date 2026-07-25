@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Screen } from '@/components/ui';
+import { EmptyStateCard, Screen } from '@/components/ui';
 import { HeaderBlur } from '@/features/dashboard';
 import { useLatestAnalysis } from '@/features/dashboard/hooks/useLatestAnalysis';
 import { useAuth } from '@/features/onboarding';
@@ -79,20 +79,31 @@ export default function RoutinesScreen() {
 
         <View style={styles.afterHeader}>
           <View style={styles.routineList}>
-            {routines.map((routine, index) => (
-              <Animated.View key={routine.id} entering={enter(1 + index)}>
-                <RoutineCard
-                  routine={routine}
-                  expanded={expandedId === routine.id}
-                  onToggle={() =>
-                    setExpandedId((current) => (current === routine.id ? null : routine.id))
-                  }
-                  onToggleStep={(stepId) => onToggleStep(routine.id, stepId)}
-                  onStartExercise={startExercise}
-                  onOpenProducts={(step) => setProductStep({ id: step.id, title: step.title })}
+            {routines.length === 0 ? (
+              <Animated.View entering={enter(1)}>
+                <EmptyStateCard
+                  title="Scan to unlock your routine"
+                  caption="Your morning and night steps appear after a skin analysis."
+                  actionLabel="Start scan"
+                  onAction={() => router.push('/scan/weekly')}
                 />
               </Animated.View>
-            ))}
+            ) : (
+              routines.map((routine, index) => (
+                <Animated.View key={routine.id} entering={enter(1 + index)}>
+                  <RoutineCard
+                    routine={routine}
+                    expanded={expandedId === routine.id}
+                    onToggle={() =>
+                      setExpandedId((current) => (current === routine.id ? null : routine.id))
+                    }
+                    onToggleStep={(stepId) => onToggleStep(routine.id, stepId)}
+                    onStartExercise={startExercise}
+                    onOpenProducts={(step) => setProductStep({ id: step.id, title: step.title })}
+                  />
+                </Animated.View>
+              ))
+            )}
           </View>
         </View>
       </ScrollView>

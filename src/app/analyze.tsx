@@ -25,7 +25,10 @@ export default function AnalyzeScreen() {
   const insets = useSafeAreaInsets();
   const { tab: initialTab } = useLocalSearchParams<{ tab?: string }>();
   const [tab, setTab] = useState<AnalysisTab>(
-    isAnalysisTab(initialTab) ? initialTab : 'symptoms',
+    isAnalysisTab(initialTab) &&
+      (initialTab === 'overview' || initialTab === 'symptoms')
+      ? initialTab
+      : 'overview',
   );
   const { analysis } = useLatestAnalysis();
   const imageUri = useFrontScanAvatar(analysis?.batch_id);

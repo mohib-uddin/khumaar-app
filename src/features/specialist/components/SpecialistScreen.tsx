@@ -1,40 +1,45 @@
 import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 
 import { Screen } from '@/components/ui';
 import { HeaderBlur } from '@/features/dashboard';
+import { useLatestAnalysis } from '@/features/dashboard/hooks/useLatestAnalysis';
 import { palette } from '@/theme';
 
+import { briefChipsFromAnalysis } from '../briefChipsFromAnalysis';
+import { useCoachHistory } from '../hooks/useCoachHistory';
 import { useSpecialistSession } from '../hooks/useSpecialistSession';
 import { SpecialistChat } from './chat/SpecialistChat';
 import { SpecialistHub } from './hub/SpecialistHub';
-import { MockScanSheet } from './MockScanSheet';
 import { SpecialistComposer } from './SpecialistComposer';
 
 export function SpecialistScreen() {
   const router = useRouter();
+  const { analysis } = useLatestAnalysis();
+  const { items: history, refresh: refreshHistory } = useCoachHistory();
   const session = useSpecialistSession();
   const {
     mode,
     chatTitle,
     messages,
     isTyping,
-    scanSheetOpen,
-    setScanSheetOpen,
     backToHub,
     sendBriefChip,
     startNewChat,
     sendUserText,
-    openFeatureScan,
-    openFeatureRoutine,
-    openRecentActivity,
-    startMockScan,
+    openCoachHistory,
     selectTriage,
     clearTimers,
   } = session;
 
+  const chips = useMemo(() => briefChipsFromAnalysis(analysis), [analysis]);
+
   useEffect(() => () => clearTimers(), [clearTimers]);
+
+  useEffect(() => {
+    if (mode === 'hub') void refreshHistory();
+  }, [mode, refreshHistory]);
 
   const handleExit = () => {
     if (mode === 'chat') {
@@ -56,16 +61,14 @@ export function SpecialistScreen() {
           <>
             <SpecialistHub
               onBack={handleExit}
-              onFeatureScan={openFeatureScan}
-              onFeatureRoutine={openFeatureRoutine}
-              onRecentActivity={openRecentActivity}
+              chips={chips}
+              history={history}
               onBriefMetric={sendBriefChip}
+              onOpenHistory={(item) =>
+                openCoachHistory(item.title, item.blocks, item.threadId)
+              }
             />
-            <SpecialistComposer
-              variant="hub"
-              onSend={startNewChat}
-              onAttachScan={openFeatureScan}
-            />
+            <SpecialistComposer variant="hub" onSend={startNewChat} />
           </>
         ) : (
           <SpecialistChat
@@ -74,17 +77,10 @@ export function SpecialistScreen() {
             isTyping={isTyping}
             onBack={backToHub}
             onSend={sendUserText}
-            onScanPress={() => setScanSheetOpen(true)}
             onTriageSelect={selectTriage}
           />
         )}
       </KeyboardAvoidingView>
-
-      <MockScanSheet
-        visible={scanSheetOpen}
-        onClose={() => setScanSheetOpen(false)}
-        onCapture={startMockScan}
-      />
     </Screen>
   );
 }

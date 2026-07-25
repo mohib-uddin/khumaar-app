@@ -59,8 +59,10 @@ export function RoutineProductSheet({ visible, step, onClose }: Props) {
     };
   }, [loadedStepId, step, visible]);
 
-  const openAffiliate = (product: ProductRecommendation) => {
-    void Linking.openURL(product.affiliateUrl || product.sourceUrl || 'https://khumaar.app');
+  const openProduct = (product: ProductRecommendation) => {
+    const url = product.sourceUrl?.trim();
+    if (!url) return;
+    void Linking.openURL(url);
   };
 
   const loading = visible && Boolean(step) && loadedStepId !== step?.id;
@@ -151,7 +153,7 @@ export function RoutineProductSheet({ visible, step, onClose }: Props) {
                     key={product.id}
                     product={product}
                     featured={index === 0}
-                    onPress={() => openAffiliate(product)}
+                    onPress={() => openProduct(product)}
                   />
                 ))}
               </Animated.View>
@@ -160,11 +162,13 @@ export function RoutineProductSheet({ visible, step, onClose }: Props) {
 
           {!loading && topMatch ? (
             <View style={styles.footer}>
-              <Button
-                label="View best match"
-                onPress={() => openAffiliate(topMatch)}
-                accessibilityLabel={`View best match for ${topMatch.name}`}
-              />
+              {topMatch.sourceUrl ? (
+                <Button
+                  label="Browse only"
+                  onPress={() => openProduct(topMatch)}
+                  accessibilityLabel={`Browse ${topMatch.name}`}
+                />
+              ) : null}
               <Button
                 label="Continue routine"
                 variant="secondary"

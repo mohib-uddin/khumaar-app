@@ -1,10 +1,10 @@
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { AwarenessTag, Text } from '@/components/ui';
+import { AwarenessTag, EmptyStateCard, Text } from '@/components/ui';
 import { spacing } from '@/theme';
 
-import { awarenessTags, symptomMetrics, type SymptomMetric } from './data';
+import { awarenessTags, type SymptomMetric } from './data';
 import { PanelHeading } from './PanelHeading';
 import { SymptomMetricRow } from './SymptomMetricRow';
 
@@ -12,14 +12,28 @@ type Props = {
   metrics?: SymptomMetric[];
 };
 
-/** Symptoms tab — detected symptom severities and known triggers. */
-export function SymptomsPanel({ metrics = symptomMetrics }: Props) {
+/** Symptoms tab — live metrics only; no mock symptom rows. */
+export function SymptomsPanel({ metrics }: Props) {
+  const live = metrics?.length ? metrics : [];
+
+  if (!live.length) {
+    return (
+      <View style={styles.panel}>
+        <PanelHeading title="Detailed Analysis" subtitle="Based on AI skin detection" />
+        <EmptyStateCard
+          title="No symptoms yet"
+          caption="Complete a scan to see symptom severity from your analysis."
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.panel}>
       <PanelHeading title="Detailed Analysis" subtitle="Based on AI skin detection" />
 
       <View style={styles.metrics}>
-        {metrics.map((metric, index) => (
+        {live.map((metric, index) => (
           <SymptomMetricRow key={metric.id} metric={metric} index={index} />
         ))}
       </View>

@@ -1,12 +1,10 @@
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { Card, Pill, Text } from '@/components/ui';
+import { EmptyStateCard, Card, Pill, Text } from '@/components/ui';
 import { Lightning } from '@/components/icons';
 import {
   SkinHealthAnalysis,
-  scanSummary as defaultSummary,
-  skinMetrics as defaultMetrics,
   toneColor,
   toneSoft,
   type ScanSummary,
@@ -21,12 +19,22 @@ type Props = {
   metrics?: SkinMetric[];
 };
 
-/** Overview tab — plain-language summary of the latest scan + skin metrics. */
-export function OverviewPanel({
-  summary = defaultSummary,
-  metrics = defaultMetrics,
-}: Props) {
-  const data = summary ?? defaultSummary;
+/** Overview tab — live summary only; no mock score fallback. */
+export function OverviewPanel({ summary, metrics }: Props) {
+  if (!summary) {
+    return (
+      <View style={styles.panel}>
+        <PanelHeading title="Your skin today" subtitle="AI summary of your latest scan" />
+        <EmptyStateCard
+          title="No scan yet"
+          caption="Complete a skin scan to see your overview and health metrics."
+        />
+      </View>
+    );
+  }
+
+  const data = summary;
+  const liveMetrics = metrics?.length ? metrics : [];
 
   return (
     <View style={styles.panel}>
@@ -87,7 +95,14 @@ export function OverviewPanel({
         <Text variant="stepTitle" color="textPrimary">
           Skin health
         </Text>
-        <SkinHealthAnalysis metrics={metrics.length ? metrics : defaultMetrics} />
+        {liveMetrics.length ? (
+          <SkinHealthAnalysis metrics={liveMetrics} />
+        ) : (
+          <EmptyStateCard
+            title="Metrics pending"
+            caption="Your next scan will fill in detailed skin health rows."
+          />
+        )}
       </Animated.View>
     </View>
   );

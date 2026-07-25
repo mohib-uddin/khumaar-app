@@ -17,7 +17,6 @@ type Props = {
   isTyping: boolean;
   onBack: () => void;
   onSend: (text: string) => void;
-  onScanPress: () => void;
   onTriageSelect: (level: TriageLevel) => void;
 };
 
@@ -27,7 +26,6 @@ export function SpecialistChat({
   isTyping,
   onBack,
   onSend,
-  onScanPress,
   onTriageSelect,
 }: Props) {
   const insets = useSafeAreaInsets();
@@ -62,12 +60,11 @@ export function SpecialistChat({
           <ConsultationBlockView
             block={item}
             index={index}
-            onScanPress={onScanPress}
             onTriageSelect={onTriageSelect}
           />
         )}
       />
-      <SpecialistComposer onSend={onSend} onAttachScan={onScanPress} />
+      <SpecialistComposer onSend={onSend} />
     </View>
   );
 }

@@ -3,6 +3,7 @@ export { AwarenessTag } from './AwarenessTag';
 export { Button } from './Button';
 export { Card } from './Card';
 export { ChipTabs } from './ChipTabs';
+export { EmptyStateCard } from './EmptyStateCard';
 export { GradientIconButton } from './GradientIconButton';
 export { IconButton } from './IconButton';
 export { Pill } from './Pill';

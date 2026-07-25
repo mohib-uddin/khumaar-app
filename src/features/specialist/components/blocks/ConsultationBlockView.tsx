@@ -16,7 +16,7 @@ const userAvatar = require('../../../../../assets/figma/avatars/profile-main.png
 type Props = {
   block: ConsultationBlock;
   index: number;
-  onScanPress: () => void;
+  onScanPress?: () => void;
   onTriageSelect: (level: TriageLevel) => void;
 };
 
@@ -43,6 +43,7 @@ function SpecialistRow({ children }: { children: React.ReactNode }) {
 
 export function ConsultationBlockView({ block, index, onScanPress, onTriageSelect }: Props) {
   const router = useRouter();
+  const startScan = onScanPress ?? (() => router.push('/scan/weekly'));
 
   switch (block.type) {
     case 'user':
@@ -105,7 +106,7 @@ export function ConsultationBlockView({ block, index, onScanPress, onTriageSelec
               <GradientIconButton
                 size={48}
                 accessibilityLabel="Start scan"
-                onPress={onScanPress}
+                onPress={startScan}
                 style={styles.gapTop}>
                 <ScanFace size={22} color={palette.ink[900]} />
               </GradientIconButton>

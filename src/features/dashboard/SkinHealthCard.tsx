@@ -5,22 +5,18 @@ import { Card, Text } from '@/components/ui';
 import { palette, radii, spacing } from '@/theme';
 
 type Props = {
-  score?: number;
+  score: number;
   total?: number;
-  updatedAt?: string;
-  status?: string;
+  updatedAt: string;
+  status: string;
 };
 
 /**
  * Card showing the user's current skin health score, last update timestamp,
- * and an inline status pill at the bottom.
+ * and an inline status pill at the bottom. Callers must supply live values —
+ * no mock defaults.
  */
-export function SkinHealthCard({
-  score = 86,
-  total = 100,
-  updatedAt = '15 Mins ago',
-  status = 'Good Progress',
-}: Props) {
+export function SkinHealthCard({ score, total = 100, updatedAt, status }: Props) {
   return (
     <Card style={styles.card}>
       <View style={styles.heading}>

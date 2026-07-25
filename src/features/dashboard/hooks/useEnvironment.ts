@@ -8,18 +8,17 @@ type EnvironmentState = {
   status: string;
   readings: EnvironmentReading[];
   loading: boolean;
+  available: boolean;
+  emptyCaption: string;
 };
 
-const FALLBACK: EnvironmentState = {
+const EMPTY: EnvironmentState = {
   locationLabel: 'Your area',
-  status: 'UV unknown',
-  readings: [
-    { x: 0.13, value: 2.9 },
-    { x: 0.4, value: 2.1 },
-    { x: 0.58, value: 6.5 },
-    { x: 0.9, value: 9.2, emphasis: true },
-  ],
+  status: 'UV unavailable',
+  readings: [],
   loading: false,
+  available: false,
+  emptyCaption: 'Allow location to see local UV.',
 };
 
 function uvStatus(uv: number): string {
@@ -45,7 +44,7 @@ function buildReadings(hourly: number[]): EnvironmentReading[] {
 }
 
 export function useEnvironment() {
-  const [state, setState] = useState<EnvironmentState>({ ...FALLBACK, loading: true });
+  const [state, setState] = useState<EnvironmentState>({ ...EMPTY, loading: true });
 
   useEffect(() => {
     let cancelled = false;
@@ -54,7 +53,12 @@ export function useEnvironment() {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
-          if (!cancelled) setState(FALLBACK);
+          if (!cancelled) {
+            setState({
+              ...EMPTY,
+              emptyCaption: 'Allow location to see local UV.',
+            });
+          }
           return;
         }
 
@@ -86,15 +90,30 @@ export function useEnvironment() {
         const currentUv = uvSeries[Math.min(uvSeries.length - 1, new Date().getHours())] ?? 0;
 
         if (!cancelled) {
+          if (!uvSeries.length) {
+            setState({
+              ...EMPTY,
+              locationLabel: locationLabel || EMPTY.locationLabel,
+              emptyCaption: 'UV data unavailable right now.',
+            });
+            return;
+          }
           setState({
-            locationLabel: locationLabel || FALLBACK.locationLabel,
+            locationLabel: locationLabel || EMPTY.locationLabel,
             status: uvStatus(currentUv),
-            readings: uvSeries.length ? buildReadings(uvSeries) : FALLBACK.readings,
+            readings: buildReadings(uvSeries),
             loading: false,
+            available: true,
+            emptyCaption: '',
           });
         }
       } catch {
-        if (!cancelled) setState(FALLBACK);
+        if (!cancelled) {
+          setState({
+            ...EMPTY,
+            emptyCaption: 'Could not load local UV. Try again later.',
+          });
+        }
       }
     })();
 

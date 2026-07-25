@@ -35,6 +35,7 @@ export function SpecialistComposer({ onSend, onAttachScan, variant = 'chat' }: P
 
   const LeadingIcon = isHub ? Plus : Paperclip;
   const micShowsSend = !isHub && hasText;
+  const showAttach = Boolean(onAttachScan);
 
   return (
     <View
@@ -42,13 +43,15 @@ export function SpecialistComposer({ onSend, onAttachScan, variant = 'chat' }: P
       style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
       <View style={styles.row}>
         <Card radius="pill" elevation="card" background={palette.white} style={styles.pill}>
-          <PressableScale
-            onPress={onAttachScan}
-            style={styles.leading}
-            hitSlop={8}
-            accessibilityLabel="Add attachment">
-            <LeadingIcon size={20} color={palette.ink[700]} />
-          </PressableScale>
+          {showAttach ? (
+            <PressableScale
+              onPress={onAttachScan}
+              style={styles.leading}
+              hitSlop={8}
+              accessibilityLabel="Add attachment">
+              <LeadingIcon size={20} color={palette.ink[700]} />
+            </PressableScale>
+          ) : null}
           <TextInput
             value={text}
             onChangeText={setText}
