@@ -6,6 +6,7 @@ import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { AuthProvider } from '@/features/onboarding';
 import { lufgaFonts, palette } from '@/theme';
 import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
 
@@ -27,7 +28,10 @@ function RootStack() {
           animation: 'slide_from_right',
           animationDuration: 280,
         }}>
+        <Stack.Screen name="index" options={{ animation: 'fade' }} />
+        <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
         <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
+        <Stack.Screen name="auth/callback" options={{ animation: 'fade' }} />
         <Stack.Screen
           name="analyze"
           options={{
@@ -81,7 +85,9 @@ export default function RootLayout() {
         {/* The Figma source is a strictly light-mode design — pin the theme
             until the dark variant is approved. */}
         <ThemeProvider override="light">
-          <RootStack />
+          <AuthProvider>
+            <RootStack />
+          </AuthProvider>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -8,10 +8,15 @@ if [ ! -d "$JSI_DIR" ]; then
   exit 0
 fi
 
+# Collapse accidental double-application from older patch runs.
+find "$JSI_DIR" -name "*.swift" -exec sed -i '' \
+  's/nonisolated(unsafe) nonisolated(unsafe) weak var runtime/nonisolated(unsafe) weak var runtime/g' {} +
+
 # Swift 6.2 requires weak references to be `var`, not `let`.
 find "$JSI_DIR" -name "*.swift" -exec sed -i '' 's/weak let runtime/weak var runtime/g' {} +
 
 # Sendable classes cannot have mutable stored properties unless marked unsafe.
+# Only patch lines that do not already have nonisolated(unsafe).
 for file in \
   "$JSI_DIR/Contexts/HostFunctionContext.swift" \
   "$JSI_DIR/Contexts/HostObjectContext.swift" \
@@ -19,6 +24,9 @@ for file in \
   "$JSI_DIR/Runtime/Values/JavaScriptValue.swift"
 do
   if [ -f "$file" ]; then
-    sed -i '' 's/weak var runtime/nonisolated(unsafe) weak var runtime/g' "$file"
+    # Match "weak var runtime" only when not already prefixed with nonisolated(unsafe)
+    sed -i '' -E \
+      's/(^|[[:space:]])weak var runtime/\1nonisolated(unsafe) weak var runtime/g; s/nonisolated\(unsafe\) nonisolated\(unsafe\) weak var runtime/nonisolated(unsafe) weak var runtime/g' \
+      "$file"
   fi
 done

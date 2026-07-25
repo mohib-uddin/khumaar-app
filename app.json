@@ -7,9 +7,14 @@
     "icon": "./assets/images/icon.png",
     "scheme": "khumaar",
     "userInterfaceStyle": "light",
+    "newArchEnabled": true,
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.bitsrain.khumaar"
+      "bundleIdentifier": "com.bitsrain.khumaar",
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Khumaar uses your camera for cosmetic skin coaching scans. Photos stay private to your account."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +24,10 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.bitsrain.khumaar"
+      "package": "com.bitsrain.khumaar",
+      "permissions": [
+        "CAMERA"
+      ]
     },
     "web": {
       "output": "static",
@@ -27,6 +35,16 @@
     },
     "plugins": [
       "expo-router",
+      "expo-secure-store",
+      "expo-apple-authentication",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Khumaar uses your camera for cosmetic skin coaching scans. Photos stay private to your account.",
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": false
+        }
+      ],
       [
         "expo-font",
         {
@@ -50,7 +68,9 @@
             "imageWidth": 76
           }
         }
-      ]
+      ],
+      "expo-image",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

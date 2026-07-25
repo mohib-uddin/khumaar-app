@@ -1,0 +1,194 @@
+diff --git a/node_modules/@noma4i/vision-camera-face-detector/android/src/main/java/com/noma4i/visioncamerafacedetector/FaceDetectionOutputImpl.kt b/node_modules/@noma4i/vision-camera-face-detector/android/src/main/java/com/noma4i/visioncamerafacedetector/FaceDetectionOutputImpl.kt
+index 24fd1bc..ceba178 100644
+--- a/node_modules/@noma4i/vision-camera-face-detector/android/src/main/java/com/noma4i/visioncamerafacedetector/FaceDetectionOutputImpl.kt
++++ b/node_modules/@noma4i/vision-camera-face-detector/android/src/main/java/com/noma4i/visioncamerafacedetector/FaceDetectionOutputImpl.kt
+@@ -208,6 +208,7 @@ open class FaceDetectionOutputImpl :
+         height = box.height().toDouble(),
+       ),
+       trackingId = face.trackingId?.toDouble(),
++      yawAngle = face.headEulerAngleY.toDouble(),
+     )
+   }
+ 
+diff --git a/node_modules/@noma4i/vision-camera-face-detector/lib/specs/FaceDetector.nitro.d.ts b/node_modules/@noma4i/vision-camera-face-detector/lib/specs/FaceDetector.nitro.d.ts
+index 0c608cc..3859778 100644
+--- a/node_modules/@noma4i/vision-camera-face-detector/lib/specs/FaceDetector.nitro.d.ts
++++ b/node_modules/@noma4i/vision-camera-face-detector/lib/specs/FaceDetector.nitro.d.ts
+@@ -20,6 +20,8 @@ export interface DetectedFaceBounds {
+ export interface DetectedFace {
+     bounds: DetectedFaceBounds;
+     trackingId?: number;
++    /** Head yaw in degrees (iOS Vision / Android ML Kit). */
++    yawAngle?: number;
+ }
+ export type FaceDetectionOrientation = 'up' | 'right' | 'down' | 'left';
+ export interface FaceDetectionFrame {
+diff --git a/node_modules/@noma4i/vision-camera-face-detector/lib/usePlatformFaceDetectionOutput.ios.js b/node_modules/@noma4i/vision-camera-face-detector/lib/usePlatformFaceDetectionOutput.ios.js
+index 665e63b..c44cb2e 100644
+--- a/node_modules/@noma4i/vision-camera-face-detector/lib/usePlatformFaceDetectionOutput.ios.js
++++ b/node_modules/@noma4i/vision-camera-face-detector/lib/usePlatformFaceDetectionOutput.ios.js
+@@ -25,7 +25,8 @@ export const usePlatformFaceDetectionOutput = ({ cameraRef, fps, preview, onResu
+                     continue;
+                 faces.push({
+                     bounds: { x, y, width, height },
+-                    trackingId: object.faceID
++                    trackingId: object.faceID,
++                    yawAngle: object.hasYawAngle ? object.yawAngle : undefined
+                 });
+             }
+             catch {
+diff --git a/node_modules/@noma4i/vision-camera-face-detector/nitrogen/generated/android/c++/JDetectedFace.hpp b/node_modules/@noma4i/vision-camera-face-detector/nitrogen/generated/android/c++/JDetectedFace.hpp
+index bcd7916..207670e 100644
+--- a/node_modules/@noma4i/vision-camera-face-detector/nitrogen/generated/android/c++/JDetectedFace.hpp
++++ b/node_modules/@noma4i/vision-camera-face-detector/nitrogen/generated/android/c++/JDetectedFace.hpp
+@@ -4,6 +4,7 @@
+ /// https://github.com/mrousavy/nitro
+ /// Copyright © Marc Rousavy @ Margelo
+ ///
++/// Patched by Khumaar: yawAngle for cheek-pose gating.
+ 
+ #pragma once
+ 
+@@ -37,9 +38,12 @@ namespace margelo::nitro::noma4i::visioncamerafacedetector {
+       jni::local_ref<JDetectedFaceBounds> bounds = this->getFieldValue(fieldBounds);
+       static const auto fieldTrackingId = clazz->getField<jni::JDouble>("trackingId");
+       jni::local_ref<jni::JDouble> trackingId = this->getFieldValue(fieldTrackingId);
++      static const auto fieldYawAngle = clazz->getField<jni::JDouble>("yawAngle");
++      jni::local_ref<jni::JDouble> yawAngle = this->getFieldValue(fieldYawAngle);
+       return DetectedFace(
+         bounds->toCpp(),
+-        trackingId != nullptr ? std::make_optional(trackingId->value()) : std::nullopt
++        trackingId != nullptr ? std::make_optional(trackingId->value()) : std::nullopt,
++        yawAngle != nullptr ? std::make_optional(yawAngle->value()) : std::nullopt
+       );
+     }
+ 
+@@ -49,13 +53,14 @@ namespace margelo::nitro::noma4i::visioncamerafacedetector {
+      */
+     [[maybe_unused]]
+     static jni::local_ref<JDetectedFace::javaobject> fromCpp(const DetectedFace& value) {
+-      using JSignature = JDetectedFace(jni::alias_ref<JDetectedFaceBounds>, jni::alias_ref<jni::JDouble>);
++      using JSignature = JDetectedFace(jni::alias_ref<JDetectedFaceBounds>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>);
+       static const auto clazz = javaClassStatic();
+       static const auto create = clazz->getStaticMethod<JSignature>("fromCpp");
+       return create(
+         clazz,
+         JDetectedFaceBounds::fromCpp(value.bounds),
+-        value.trackingId.has_value() ? jni::JDouble::valueOf(value.trackingId.value()) : nullptr
++        value.trackingId.has_value() ? jni::JDouble::valueOf(value.trackingId.value()) : nullptr,
++        value.yawAngle.has_value() ? jni::JDouble::valueOf(value.yawAngle.value()) : nullptr
+       );
+     }
+   };
+diff --git a/node_modules/@noma4i/vision-camera-face-detector/nitrogen/generated/android/kotlin/com/margelo/nitro/noma4i/visioncamerafacedetector/DetectedFace.kt b/node_modules/@noma4i/vision-camera-face-detector/nitrogen/generated/android/kotlin/com/margelo/nitro/noma4i/visioncamerafacedetector/DetectedFace.kt
+index a24df9d..ba1d147 100644
+--- a/node_modules/@noma4i/vision-camera-face-detector/nitrogen/generated/android/kotlin/com/margelo/nitro/noma4i/visioncamerafacedetector/DetectedFace.kt
++++ b/node_modules/@noma4i/vision-camera-face-detector/nitrogen/generated/android/kotlin/com/margelo/nitro/noma4i/visioncamerafacedetector/DetectedFace.kt
+@@ -4,6 +4,7 @@
+ /// https://github.com/mrousavy/nitro
+ /// Copyright © Marc Rousavy @ Margelo
+ ///
++/// Patched by Khumaar: yawAngle for cheek-pose gating.
+ 
+ package com.margelo.nitro.noma4i.visioncamerafacedetector
+ 
+@@ -22,7 +23,10 @@ data class DetectedFace(
+   val bounds: DetectedFaceBounds,
+   @DoNotStrip
+   @Keep
+-  val trackingId: Double?
++  val trackingId: Double?,
++  @DoNotStrip
++  @Keep
++  val yawAngle: Double?
+ ) {
+   /* primary constructor */
+ 
+@@ -34,8 +38,8 @@ data class DetectedFace(
+     @Keep
+     @Suppress("unused")
+     @JvmStatic
+-    private fun fromCpp(bounds: DetectedFaceBounds, trackingId: Double?): DetectedFace {
+-      return DetectedFace(bounds, trackingId)
++    private fun fromCpp(bounds: DetectedFaceBounds, trackingId: Double?, yawAngle: Double?): DetectedFace {
++      return DetectedFace(bounds, trackingId, yawAngle)
+     }
+   }
+ }
+diff --git a/node_modules/@noma4i/vision-camera-face-detector/nitrogen/generated/shared/c++/DetectedFace.hpp b/node_modules/@noma4i/vision-camera-face-detector/nitrogen/generated/shared/c++/DetectedFace.hpp
+index aeee9e1..1bc4412 100644
+--- a/node_modules/@noma4i/vision-camera-face-detector/nitrogen/generated/shared/c++/DetectedFace.hpp
++++ b/node_modules/@noma4i/vision-camera-face-detector/nitrogen/generated/shared/c++/DetectedFace.hpp
+@@ -4,6 +4,7 @@
+ /// https://github.com/mrousavy/nitro
+ /// Copyright © Marc Rousavy @ Margelo
+ ///
++/// Patched by Khumaar: yawAngle for cheek-pose gating.
+ 
+ #pragma once
+ 
+@@ -43,10 +44,11 @@ namespace margelo::nitro::noma4i::visioncamerafacedetector {
+   public:
+     DetectedFaceBounds bounds     SWIFT_PRIVATE;
+     std::optional<double> trackingId     SWIFT_PRIVATE;
++    std::optional<double> yawAngle     SWIFT_PRIVATE;
+ 
+   public:
+     DetectedFace() = default;
+-    explicit DetectedFace(DetectedFaceBounds bounds, std::optional<double> trackingId): bounds(bounds), trackingId(trackingId) {}
++    explicit DetectedFace(DetectedFaceBounds bounds, std::optional<double> trackingId, std::optional<double> yawAngle): bounds(bounds), trackingId(trackingId), yawAngle(yawAngle) {}
+ 
+   public:
+     friend bool operator==(const DetectedFace& lhs, const DetectedFace& rhs) = default;
+@@ -63,13 +65,15 @@ namespace margelo::nitro {
+       jsi::Object obj = arg.asObject(runtime);
+       return margelo::nitro::noma4i::visioncamerafacedetector::DetectedFace(
+         JSIConverter<margelo::nitro::noma4i::visioncamerafacedetector::DetectedFaceBounds>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "bounds"))),
+-        JSIConverter<std::optional<double>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "trackingId")))
++        JSIConverter<std::optional<double>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "trackingId"))),
++        JSIConverter<std::optional<double>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "yawAngle")))
+       );
+     }
+     static inline jsi::Value toJSI(jsi::Runtime& runtime, const margelo::nitro::noma4i::visioncamerafacedetector::DetectedFace& arg) {
+       jsi::Object obj(runtime);
+       obj.setProperty(runtime, PropNameIDCache::get(runtime, "bounds"), JSIConverter<margelo::nitro::noma4i::visioncamerafacedetector::DetectedFaceBounds>::toJSI(runtime, arg.bounds));
+       obj.setProperty(runtime, PropNameIDCache::get(runtime, "trackingId"), JSIConverter<std::optional<double>>::toJSI(runtime, arg.trackingId));
++      obj.setProperty(runtime, PropNameIDCache::get(runtime, "yawAngle"), JSIConverter<std::optional<double>>::toJSI(runtime, arg.yawAngle));
+       return obj;
+     }
+     static inline bool canConvert(jsi::Runtime& runtime, const jsi::Value& value) {
+@@ -82,6 +86,7 @@ namespace margelo::nitro {
+       }
+       if (!JSIConverter<margelo::nitro::noma4i::visioncamerafacedetector::DetectedFaceBounds>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "bounds")))) return false;
+       if (!JSIConverter<std::optional<double>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "trackingId")))) return false;
++      if (!JSIConverter<std::optional<double>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "yawAngle")))) return false;
+       return true;
+     }
+   };
+diff --git a/node_modules/@noma4i/vision-camera-face-detector/src/specs/FaceDetector.nitro.ts b/node_modules/@noma4i/vision-camera-face-detector/src/specs/FaceDetector.nitro.ts
+index 341c63b..bfb21e6 100644
+--- a/node_modules/@noma4i/vision-camera-face-detector/src/specs/FaceDetector.nitro.ts
++++ b/node_modules/@noma4i/vision-camera-face-detector/src/specs/FaceDetector.nitro.ts
+@@ -24,6 +24,8 @@ export interface DetectedFaceBounds {
+ export interface DetectedFace {
+   bounds: DetectedFaceBounds;
+   trackingId?: number;
++  /** Head yaw in degrees (iOS Vision / Android ML Kit). */
++  yawAngle?: number;
+ }
+ 
+ export type FaceDetectionOrientation = 'up' | 'right' | 'down' | 'left';
+diff --git a/node_modules/@noma4i/vision-camera-face-detector/src/usePlatformFaceDetectionOutput.ios.ts b/node_modules/@noma4i/vision-camera-face-detector/src/usePlatformFaceDetectionOutput.ios.ts
+index ad320d5..1f5a0e3 100644
+--- a/node_modules/@noma4i/vision-camera-face-detector/src/usePlatformFaceDetectionOutput.ios.ts
++++ b/node_modules/@noma4i/vision-camera-face-detector/src/usePlatformFaceDetectionOutput.ios.ts
+@@ -46,7 +46,8 @@ export const usePlatformFaceDetectionOutput = ({
+ 
+           faces.push({
+             bounds: { x, y, width, height },
+-            trackingId: object.faceID
++            trackingId: object.faceID,
++            yawAngle: object.hasYawAngle ? object.yawAngle : undefined
+           });
+         } catch {
+           return;
