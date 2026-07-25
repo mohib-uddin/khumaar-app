@@ -7,7 +7,7 @@ import { Platform } from 'react-native';
 import { env } from '@/lib/env';
 import { getSupabase } from '@/lib/supabase';
 import type { OnboardingStep, ProfileRow, SkinFeel } from '@/lib/database.types';
-import type { AnalysisMetric, ScanAnalysisRow } from '@/lib/database.types';
+import type { AnalysisMetric, RoutinePlan, ScanAnalysisRow } from '@/lib/database.types';
 import type { ScanPose } from '@/features/onboarding/constants';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -267,6 +267,7 @@ export async function invokeOnboardingAnalyze(batchId: string): Promise<ScanAnal
   return {
     ...analysis,
     metrics: (analysis.metrics ?? []) as AnalysisMetric[],
+    routine_plan: (analysis.routine_plan ?? null) as RoutinePlan | null,
   };
 }
 
@@ -285,6 +286,7 @@ export async function fetchLatestAnalysis(userId: string): Promise<ScanAnalysisR
   return {
     ...data,
     metrics: (data.metrics ?? []) as AnalysisMetric[],
+    routine_plan: (data.routine_plan ?? null) as RoutinePlan | null,
   };
 }
 

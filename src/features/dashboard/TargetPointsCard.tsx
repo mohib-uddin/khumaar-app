@@ -3,11 +3,14 @@ import Svg, { Circle, G, Line } from 'react-native-svg';
 
 import { Acne, DoubleChin, Oiliness } from '@/components/icons';
 import { Card, Pill, Text } from '@/components/ui';
+import type { FocusPoint } from '@/lib/database.types';
 import { palette, radii } from '@/theme';
 
+import { targetPoints as defaultPoints } from './data';
 import { SkinProgressRow } from './SkinProgressRow';
 
 const ICON_SIZE = 30;
+const ICONS = [Acne, Oiliness, DoubleChin] as const;
 
 function HatchedConnector() {
   return (
@@ -33,11 +36,22 @@ function DottedConnector() {
   );
 }
 
+type Props = {
+  points?: FocusPoint[];
+};
+
 /**
  * The big "Your Target Points" card. Contains the icon timeline at the top
  * and the inner "Skin" progress pill at the bottom.
  */
-export function TargetPointsCard() {
+export function TargetPointsCard({ points = defaultPoints }: Props) {
+  const slots = [0, 1, 2].map(
+    (i) =>
+      points[i] ?? defaultPoints[i] ?? { key: `p${i}`, label: 'Focus', status: 'pending' as const },
+  );
+  const active = slots.find((p) => p.status === 'active') ?? slots[1];
+  const [left, , right] = slots;
+
   return (
     <Card style={styles.card}>
       <View style={styles.section}>
@@ -53,7 +67,7 @@ export function TargetPointsCard() {
               gradient={[palette.brand[300], '#FCFFF4']}
               gradientLocations={[0.020345, 0.98348]}>
               <Text variant="captionMedium" color={palette.ink[700]}>
-                Oiliness
+                {active.label}
               </Text>
             </Pill>
             <View style={styles.activeStem} />
@@ -61,29 +75,36 @@ export function TargetPointsCard() {
 
           <View style={styles.endLabels}>
             <Text variant="captionMedium" color={palette.ink[300]}>
-              Acne
+              {left.label}
             </Text>
             <Text variant="captionMedium" color={palette.ink[300]}>
-              Double Chin
+              {right.label}
             </Text>
           </View>
 
           <View style={styles.iconsRow}>
-            <View style={[styles.iconBox, { borderColor: palette.ink[900] }]}>
-              <Acne size={16} color={palette.ink[900]} />
-            </View>
-
-            <HatchedConnector />
-
-            <View style={[styles.iconBox, styles.iconBoxDashed]}>
-              <Oiliness size={16} color={palette.ink[900]} />
-            </View>
-
-            <DottedConnector />
-
-            <View style={[styles.iconBox, { borderColor: 'rgba(204, 204, 204, 0.8)' }]}>
-              <DoubleChin size={16} color={palette.ink[900]} />
-            </View>
+            {slots.map((point, index) => {
+              const Icon = ICONS[index] ?? Acne;
+              const isActive = point.status === 'active';
+              const isDone = point.status === 'done';
+              return (
+                <View key={point.key} style={styles.iconFrag}>
+                  {index === 1 ? <HatchedConnector /> : null}
+                  {index === 2 ? <DottedConnector /> : null}
+                  <View
+                    style={[
+                      styles.iconBox,
+                      isActive && styles.iconBoxDashed,
+                      {
+                        borderColor:
+                          isDone || isActive ? palette.ink[900] : 'rgba(204, 204, 204, 0.8)',
+                      },
+                    ]}>
+                    <Icon size={16} color={palette.ink[900]} />
+                  </View>
+                </View>
+              );
+            })}
           </View>
         </View>
       </View>
@@ -130,6 +151,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   iconsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+  },
+  iconFrag: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 11,

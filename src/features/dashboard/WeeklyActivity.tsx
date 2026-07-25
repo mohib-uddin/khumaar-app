@@ -12,7 +12,7 @@ import { DotMarker } from '@/components/icons';
 import { Avatar, Text } from '@/components/ui';
 import { brandGradientBar, layout, palette, radii, shadows, spacing, springs } from '@/theme';
 
-import { weeklyActivity } from './data';
+import { weeklyActivity, type ActivityDay } from './data';
 
 const SMALL_AVATAR = require('@/assets/figma/avatars/profile-small.png');
 
@@ -31,9 +31,10 @@ type BarProps = {
   marker?: 'avatar' | 'indicator';
   label: string;
   index: number;
+  avatarSource: { uri: string } | number;
 };
 
-function ActivityBar({ height, highlighted, marker, label, index }: BarProps) {
+function ActivityBar({ height, highlighted, marker, label, index, avatarSource }: BarProps) {
   const heightAnim = useSharedValue(0);
 
   useEffect(() => {
@@ -47,7 +48,7 @@ function ActivityBar({ height, highlighted, marker, label, index }: BarProps) {
   return (
     <View style={styles.barColumn}>
       {marker === 'avatar' ? (
-        <Avatar source={SMALL_AVATAR} size={26} ringWidth={1} style={styles.markerAvatar} />
+        <Avatar source={avatarSource} size={26} ringWidth={1} style={styles.markerAvatar} />
       ) : null}
 
       <Animated.View
@@ -79,19 +80,31 @@ function ActivityBar({ height, highlighted, marker, label, index }: BarProps) {
   );
 }
 
-export function WeeklyActivity() {
+type Props = {
+  days?: ActivityDay[];
+  nextScanLabel?: string;
+  avatarUri?: string | null;
+};
+
+export function WeeklyActivity({
+  days = weeklyActivity,
+  nextScanLabel = 'Sat',
+  avatarUri,
+}: Props) {
+  const avatarSource = avatarUri ? { uri: avatarUri } : SMALL_AVATAR;
+
   return (
     <View style={styles.container}>
       <View style={styles.chart}>
         <View style={styles.divider} />
 
         <View style={styles.cursor}>
-          <Avatar source={SMALL_AVATAR} size={30} ringWidth={1} />
+          <Avatar source={avatarSource} size={30} ringWidth={1} />
           <DotMarker size={14} />
         </View>
 
         <View style={styles.bars}>
-          {weeklyActivity.map((day, index) => (
+          {days.map((day, index) => (
             <ActivityBar
               key={day.key}
               label={day.label}
@@ -99,6 +112,7 @@ export function WeeklyActivity() {
               highlighted={day.highlighted}
               marker={day.marker}
               index={index}
+              avatarSource={avatarSource}
             />
           ))}
         </View>
@@ -107,7 +121,7 @@ export function WeeklyActivity() {
       <Text variant="body" color={palette.ink[300]} style={styles.caption}>
         {'Your next AI scan is scheduled for '}
         <Text variant="bodyEmphasis" color={palette.accent.info}>
-          Sat
+          {nextScanLabel}
         </Text>
         {'. Keep the streak going.'}
       </Text>

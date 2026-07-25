@@ -8,8 +8,8 @@ import { Card, IconButton, PressableScale, Screen, Text } from '@/components/ui'
 import { HeaderBlur } from '@/features/dashboard';
 import { layout, palette, spacing } from '@/theme';
 
+import { useSupabaseScanRecords } from './hooks/useSupabaseScanRecords';
 import { ScanHistoryRow } from './ScanHistoryRow';
-import { useScanRecords } from './store';
 import type { ScanRecord } from './types';
 
 const STAGGER = 80;
@@ -29,7 +29,7 @@ function formatRange(before: ScanRecord, after: ScanRecord) {
 export function ScanHistoryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { scans, latestComparison } = useScanRecords();
+  const { scans, latestComparison } = useSupabaseScanRecords();
 
   const openCompare = (before: ScanRecord, after: ScanRecord) => {
     router.push({

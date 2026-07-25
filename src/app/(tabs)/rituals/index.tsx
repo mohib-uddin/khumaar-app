@@ -1,24 +1,24 @@
 import { useRouter } from 'expo-router';
-import { useMemo, useState, useSyncExternalStore } from 'react';
+import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Screen } from '@/components/ui';
 import { HeaderBlur } from '@/features/dashboard';
+import { useLatestAnalysis } from '@/features/dashboard/hooks/useLatestAnalysis';
+import { useAuth } from '@/features/onboarding';
 import {
-    PeriodToggle,
-    RoutineCard,
-    RoutineProductSheet,
-    RoutinesHeader,
-    applyStepOverrides,
-    nextStepStatus,
-    routinesForPeriod,
-    type Period,
-    type RoutineStep,
-    type StepStatusOverrides,
+  PeriodToggle,
+  RoutineCard,
+  RoutineProductSheet,
+  RoutinesHeader,
+  applyStepOverrides,
+  type Period,
+  type RoutineStep,
 } from '@/features/routines';
-import { getStepOverrides, subscribeStepOverrides } from '@/features/routines/progress';
+import { useRoutineCompletions } from '@/features/routines/hooks/useRoutineCompletions';
+import { routinesFromPlan } from '@/features/routines/mapRoutinePlan';
 import { layout, spacing } from '@/theme';
 
 const STAGGER = 90;
@@ -32,46 +32,32 @@ const enter = (index: number) =>
 export default function RoutinesScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { profile } = useAuth();
+  const { analysis } = useLatestAnalysis();
+  const { overrides, toggleStep } = useRoutineCompletions();
   const [period, setPeriod] = useState<Period>('today');
-  const [expandedId, setExpandedId] = useState<string | null>('morning');
+  const [expandedId, setExpandedId] = useState<string | null>(
+    profile?.starter_ritual_id ?? 'morning',
+  );
   const [productStep, setProductStep] = useState<Pick<RoutineStep, 'id' | 'title'> | null>(null);
-  const persistedOverrides = useSyncExternalStore(
-    subscribeStepOverrides,
-    getStepOverrides,
-    getStepOverrides,
-  );
-  const [stepOverrides, setStepOverrides] = useState<Record<string, StepStatusOverrides>>({});
 
-  const mergedOverrides = useMemo(
-    () => ({ ...persistedOverrides, ...stepOverrides }),
-    [persistedOverrides, stepOverrides],
+  const baseRoutines = useMemo(
+    () => routinesFromPlan(analysis?.routine_plan),
+    [analysis?.routine_plan],
   );
 
-  const routines = useMemo(
-    () =>
-      routinesForPeriod(period).map((routine) =>
-        applyStepOverrides(routine, mergedOverrides[routine.id]),
-      ),
-    [period, mergedOverrides],
-  );
+  const routines = useMemo(() => {
+    const filtered =
+      period === 'week' ? baseRoutines : baseRoutines.filter((r) => r.id !== 'weekly');
+    return filtered.map((routine) => applyStepOverrides(routine, overrides[routine.id]));
+  }, [period, baseRoutines, overrides]);
 
-  const toggleRoutine = (id: string) => {
-    setExpandedId((current) => (current === id ? null : id));
-  };
-
-  const toggleStep = (routineId: string, stepId: string) => {
-    setStepOverrides((prev) => {
-      const template = routinesForPeriod(period).find((r) => r.id === routineId);
-      const baseStep = template?.steps.find((s) => s.id === stepId);
-      const current = prev[routineId]?.[stepId] ?? baseStep?.status ?? 'pending';
-      return {
-        ...prev,
-        [routineId]: {
-          ...prev[routineId],
-          [stepId]: nextStepStatus(current),
-        },
-      };
-    });
+  const onToggleStep = (routineId: string, stepId: string) => {
+    const current = overrides[routineId]?.[stepId];
+    const template = baseRoutines.find((r) => r.id === routineId);
+    const baseStatus = template?.steps.find((s) => s.id === stepId)?.status;
+    const isCompleted = (current ?? baseStatus) === 'completed';
+    void toggleStep(routineId, stepId, isCompleted);
   };
 
   const startExercise = (stepId: string) => {
@@ -92,18 +78,16 @@ export default function RoutinesScreen() {
         </Animated.View>
 
         <View style={styles.afterHeader}>
-          {/* <Animated.View entering={enter(1)}>
-            <AIBanner visible={bannerVisible} onDismiss={() => setBannerVisible(false)} />
-          </Animated.View> */}
-
           <View style={styles.routineList}>
             {routines.map((routine, index) => (
               <Animated.View key={routine.id} entering={enter(1 + index)}>
                 <RoutineCard
                   routine={routine}
                   expanded={expandedId === routine.id}
-                  onToggle={() => toggleRoutine(routine.id)}
-                  onToggleStep={(stepId) => toggleStep(routine.id, stepId)}
+                  onToggle={() =>
+                    setExpandedId((current) => (current === routine.id ? null : routine.id))
+                  }
+                  onToggleStep={(stepId) => onToggleStep(routine.id, stepId)}
                   onStartExercise={startExercise}
                   onOpenProducts={(step) => setProductStep({ id: step.id, title: step.title })}
                 />
@@ -121,7 +105,7 @@ export default function RoutinesScreen() {
             value={period}
             onChange={(next) => {
               setPeriod(next);
-              setExpandedId('morning');
+              setExpandedId(profile?.starter_ritual_id ?? 'morning');
             }}
           />
         </Animated.View>

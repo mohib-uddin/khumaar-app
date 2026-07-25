@@ -11,6 +11,8 @@ type Props = {
   onPressScan?: () => void;
   onPressBell?: () => void;
   onPressAvatar?: () => void;
+  /** Remote signed URL for latest front scan; falls back to bundled avatar. */
+  avatarUri?: string | null;
 };
 
 /**
@@ -22,6 +24,7 @@ export function DashboardHeader({
   onPressScan,
   onPressBell,
   onPressAvatar,
+  avatarUri,
 }: Props) {
   return (
     <View style={styles.row}>
@@ -30,7 +33,7 @@ export function DashboardHeader({
         accessibilityRole="button"
         accessibilityLabel="Open profile"
         pressedScale={0.92}>
-        <Avatar source={PROFILE_AVATAR} size={56} ringWidth={2} />
+        <Avatar source={avatarUri ? { uri: avatarUri } : PROFILE_AVATAR} size={56} ringWidth={2} />
       </PressableScale>
 
       <View style={styles.actions}>

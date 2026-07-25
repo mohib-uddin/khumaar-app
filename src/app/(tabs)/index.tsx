@@ -13,6 +13,15 @@ import {
   TargetPointsCard,
   WeeklyActivity,
 } from '@/features/dashboard';
+import { useEnvironment } from '@/features/dashboard/hooks/useEnvironment';
+import { useFrontScanAvatar } from '@/features/dashboard/hooks/useFrontScanAvatar';
+import { useLatestAnalysis } from '@/features/dashboard/hooks/useLatestAnalysis';
+import {
+  relativeUpdatedLabel,
+  scoreStatus,
+  useWeeklyActivityData,
+} from '@/features/dashboard/hooks/useWeeklyActivityData';
+import { useAuth } from '@/features/onboarding';
 import { layout, spacing } from '@/theme';
 
 const STAGGER = 90;
@@ -26,6 +35,16 @@ const enter = (index: number) =>
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { profile } = useAuth();
+  const { analysis } = useLatestAnalysis();
+  const env = useEnvironment();
+  const avatarUri = useFrontScanAvatar(analysis?.batch_id);
+  const { days, nextScanLabel } = useWeeklyActivityData(analysis?.created_at);
+
+  const displayName =
+    profile?.display_name?.split(' ')[0] ||
+    profile?.display_name ||
+    'there';
 
   return (
     <Screen edges={['top', 'left', 'right']}>
@@ -39,7 +58,8 @@ export default function DashboardScreen() {
         ]}>
         <Animated.View entering={enter(0)}>
           <DashboardHeader
-            onPressScan={() => router.push('/analyze')}
+            avatarUri={avatarUri}
+            onPressScan={() => router.push('/scan/weekly')}
             onPressMagic={() => router.push('/specialist')}
             onPressAvatar={() => router.navigate('/profile')}
           />
@@ -47,12 +67,16 @@ export default function DashboardScreen() {
 
         <View style={styles.afterHeader}>
           <Animated.View entering={enter(1)}>
-            <Greeting name="Micy" />
+            <Greeting name={displayName} />
           </Animated.View>
 
           <View style={styles.afterGreeting}>
             <Animated.View entering={enter(2)}>
-              <WeeklyActivity />
+              <WeeklyActivity
+                days={days}
+                nextScanLabel={nextScanLabel}
+                avatarUri={avatarUri}
+              />
             </Animated.View>
 
             <View style={styles.progressSection}>
@@ -64,12 +88,27 @@ export default function DashboardScreen() {
 
               <View style={styles.cardsBlock}>
                 <Animated.View style={styles.statRow} entering={enter(4)}>
-                  <SkinHealthCard />
-                  <EnvironmentCard />
+                  <SkinHealthCard
+                    {...(analysis
+                      ? {
+                          score: analysis.overall_score,
+                          updatedAt: relativeUpdatedLabel(analysis.created_at),
+                          status: scoreStatus(analysis.overall_score),
+                        }
+                      : {
+                          updatedAt: relativeUpdatedLabel(null),
+                          status: scoreStatus(null),
+                        })}
+                  />
+                  <EnvironmentCard
+                    location={env.locationLabel}
+                    status={env.status}
+                    readings={env.readings}
+                  />
                 </Animated.View>
 
                 <Animated.View entering={enter(5)}>
-                  <TargetPointsCard />
+                  <TargetPointsCard points={analysis?.routine_plan?.focus_points} />
                 </Animated.View>
               </View>
             </View>

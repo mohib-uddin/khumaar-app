@@ -17,8 +17,12 @@ import { FaceDetectionMesh } from './FaceDetectionMesh';
 import { HeroGlow } from './HeroGlow';
 import { FACE_SCAN, HERO_LAYOUT } from './heroLayout';
 
+type Props = {
+  imageUri?: string | null;
+};
+
 /** Figma node 0:52 — face scan hero with glow, portrait crop, and detection mesh. */
-export function ScanHero() {
+export function ScanHero({ imageUri }: Props) {
   const { width: screenWidth } = useWindowDimensions();
   const scale = screenWidth / HERO_LAYOUT.frameWidth;
   const heroHeight = HERO_LAYOUT.frameHeight * scale;
@@ -70,7 +74,7 @@ export function ScanHero() {
           },
         ]}>
         <Image
-          source={FACE_SCAN}
+          source={imageUri ? { uri: imageUri } : FACE_SCAN}
           style={[
             styles.faceImage,
             {

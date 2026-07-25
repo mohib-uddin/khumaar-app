@@ -12,7 +12,7 @@ import { DotMarker } from '@/components/icons';
 import { Text } from '@/components/ui';
 import { durations, easings, palette } from '@/theme';
 
-import { environmentReadings } from './data';
+import { environmentReadings, type EnvironmentReading } from './data';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -22,10 +22,14 @@ const CHART_H = 50;
 const PATH_DATA =
   'M1 45.5C1 45.5 11.757 37.139 22 37.139C39.5 37.139 40.425 48.735 54.5 49C73.289 49.354 70.892 25.07 83.5 25.07C96.108 25.07 98.759 37.139 107.5 37.139C119.401 37.139 119.269 0.718 141 4C148.516 5.661 150 8.282 150 8.282';
 
+type Props = {
+  readings?: EnvironmentReading[];
+};
+
 /**
  * The environment line chart — animates the path stroke on mount.
  */
-export function EnvironmentChart() {
+export function EnvironmentChart({ readings = environmentReadings }: Props) {
   const progress = useSharedValue(0);
 
   useEffect(() => {
@@ -59,7 +63,7 @@ export function EnvironmentChart() {
         />
       </Svg>
 
-      {environmentReadings.map((reading, index) => (
+      {readings.map((reading, index) => (
         <View
           key={index}
           style={[

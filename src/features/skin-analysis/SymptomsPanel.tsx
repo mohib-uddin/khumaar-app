@@ -4,18 +4,22 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { AwarenessTag, Text } from '@/components/ui';
 import { spacing } from '@/theme';
 
-import { awarenessTags, symptomMetrics } from './data';
+import { awarenessTags, symptomMetrics, type SymptomMetric } from './data';
 import { PanelHeading } from './PanelHeading';
 import { SymptomMetricRow } from './SymptomMetricRow';
 
+type Props = {
+  metrics?: SymptomMetric[];
+};
+
 /** Symptoms tab — detected symptom severities and known triggers. */
-export function SymptomsPanel() {
+export function SymptomsPanel({ metrics = symptomMetrics }: Props) {
   return (
     <View style={styles.panel}>
       <PanelHeading title="Detailed Analysis" subtitle="Based on AI skin detection" />
 
       <View style={styles.metrics}>
-        {symptomMetrics.map((metric, index) => (
+        {metrics.map((metric, index) => (
           <SymptomMetricRow key={metric.id} metric={metric} index={index} />
         ))}
       </View>

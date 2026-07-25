@@ -27,32 +27,34 @@ Redirect URLs (Authentication → URL configuration):
 - `exp://127.0.0.1:8081/--/auth/callback` (Expo Go / dev)
 - Your Expo auth session redirect from `makeRedirectUri({ scheme: 'khumaar', path: 'auth/callback' })`
 
-## Edge Function secrets (scan analysis)
+## Edge Function secrets (Gemini)
 
-Dashboard → Edge Functions → Secrets for `onboarding-analyze`:
+Scan analysis (`onboarding-analyze`) and Specialist coach (`coach-chat`) both use the **same** Edge secret `GEMINI_API_KEY` — no Gemini key is needed in the mobile `.env`.
+
+### Supabase Edge secrets
+
+Already set on this project (keep using these):
 
 ```
-# Primary (now)
 GEMINI_API_KEY=...
 ANALYSIS_PROVIDER=gemini
 
-# Optional override
-# GEMINI_MODEL=gemini-2.0-flash
-
-# Later — switch back to Claude
-# ANTHROPIC_API_KEY=sk-ant-...
-# ANALYSIS_PROVIDER=claude
+# Optional override (gemini-2.0-flash is retired)
+# GEMINI_MODEL=gemini-2.5-flash
 ```
 
 `GOOGLE_GENERATIVE_AI_API_KEY` is accepted as an alias for `GEMINI_API_KEY`.
 
-Provider order: if `ANALYSIS_PROVIDER=claude` and Anthropic key is set → Claude; else Gemini when a Gemini key is set; else Anthropic if present; else a **heuristic** from concerns + skin feel so onboarding stays testable.
+If the Gemini key is missing or analyze fails, analyze falls back to a **heuristic** from concerns + skin feel (includes a default `routine_plan`).
 
-Redeploy after changing secrets:
+Redeploy after changing secrets / code:
 
 ```bash
 npx supabase functions deploy onboarding-analyze
+npx supabase functions deploy coach-chat
 ```
+
+Keep the existing public Supabase vars in `.env` / `.env.local` (`EXPO_PUBLIC_SUPABASE_*` only).
 
 ## Face scanner (VisionCamera)
 

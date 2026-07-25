@@ -4,14 +4,20 @@ import { Sun } from '@/components/icons';
 import { Card, Text } from '@/components/ui';
 import { palette, spacing } from '@/theme';
 
+import type { EnvironmentReading } from './data';
 import { EnvironmentChart } from './EnvironmentChart';
 
 type Props = {
   location?: string;
   status?: string;
+  readings?: EnvironmentReading[];
 };
 
-export function EnvironmentCard({ location = 'LA, California', status = 'High UV' }: Props) {
+export function EnvironmentCard({
+  location = 'LA, California',
+  status = 'High UV',
+  readings,
+}: Props) {
   return (
     <Card style={styles.card}>
       <View style={styles.heading}>
@@ -23,7 +29,7 @@ export function EnvironmentCard({ location = 'LA, California', status = 'High UV
         </Text>
       </View>
 
-      <EnvironmentChart />
+      <EnvironmentChart readings={readings} />
 
       <View style={styles.statusRow}>
         <Sun size={14} color={palette.accent.warning} />

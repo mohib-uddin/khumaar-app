@@ -13,7 +13,9 @@
       "bundleIdentifier": "com.bitsrain.khumaar",
       "usesAppleSignIn": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "Khumaar uses your camera for cosmetic skin coaching scans. Photos stay private to your account."
+        "NSCameraUsageDescription": "Khumaar uses your camera for cosmetic skin coaching scans. Photos stay private to your account.",
+        "NSLocationWhenInUseUsageDescription": "Khumaar uses your location to show local UV and environment coaching.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Khumaar uses your location to show local UV and environment coaching."
       }
     },
     "android": {
@@ -26,7 +28,9 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.bitsrain.khumaar",
       "permissions": [
-        "CAMERA"
+        "CAMERA",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
       ]
     },
     "web": {
@@ -70,7 +74,13 @@
         }
       ],
       "expo-image",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Khumaar uses your location to show local UV and environment coaching."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

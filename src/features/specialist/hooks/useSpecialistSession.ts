@@ -1,14 +1,14 @@
 import { useCallback, useRef, useState } from 'react';
 
+import { getSupabase } from '@/lib/supabase';
+
 import { recentActivities } from '../recentActivities';
 import {
-  blocksForBriefChip,
   blocksForFlare,
   blocksForQuickIntent,
   blocksForScanAnalyzing,
   blocksForScanResult,
   blocksForTriage,
-  blocksForUserText,
   nextBlockId,
   welcomeBlocks,
 } from '../sessions';
@@ -16,8 +16,43 @@ import type { ConsultationBlock, TriageLevel } from '../types';
 
 const TYPING_MS = 900;
 const SCAN_MS = 1600;
+const COACH_ERROR =
+  'Could not reach the coach. Check your connection and try again.';
 
 export type SpecialistMode = 'hub' | 'chat';
+
+type HistoryTurn = { role: 'user' | 'assistant'; content: string };
+
+function historyFromBlocks(blocks: ConsultationBlock[]): HistoryTurn[] {
+  const turns: HistoryTurn[] = [];
+  for (const b of blocks) {
+    if (b.type === 'user' && b.text.trim()) {
+      turns.push({ role: 'user', content: b.text.trim() });
+    } else if (b.type === 'specialist' && b.text.trim()) {
+      turns.push({ role: 'assistant', content: b.text.trim() });
+    }
+  }
+  return turns.slice(-8);
+}
+
+async function invokeCoachChat(message: string, history: HistoryTurn[]): Promise<string> {
+  const supabase = getSupabase();
+  if (!supabase) throw new Error('Supabase is not configured');
+
+  const { data, error } = await supabase.functions.invoke('coach-chat', {
+    body: { message, history },
+  });
+
+  const payload = data as { reply?: string; error?: string; detail?: string } | null;
+  if (error) {
+    const detail = payload?.detail || payload?.error;
+    throw new Error(detail ? `${error.message}: ${detail}` : error.message);
+  }
+
+  const reply = payload?.reply?.trim();
+  if (!reply) throw new Error(payload?.error || 'Empty coach reply');
+  return reply;
+}
 
 export function useSpecialistSession() {
   const [mode, setMode] = useState<SpecialistMode>('hub');
@@ -26,6 +61,8 @@ export function useSpecialistSession() {
   const [isTyping, setIsTyping] = useState(false);
   const [scanSheetOpen, setScanSheetOpen] = useState(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const messagesRef = useRef<ConsultationBlock[]>([]);
+  messagesRef.current = messages;
 
   const clearTimers = useCallback(() => {
     timers.current.forEach(clearTimeout);
@@ -34,17 +71,22 @@ export function useSpecialistSession() {
 
   const appendBlocks = useCallback((blocks: ConsultationBlock[]) => {
     setMessages((prev) => [...prev.filter((m) => m.type !== 'typing'), ...blocks]);
+    setIsTyping(false);
   }, []);
 
-  const enterChat = useCallback((title: string, initial?: ConsultationBlock[]) => {
-    setChatTitle(title);
-    setMode('chat');
-    if (initial) {
-      setMessages(initial);
-    } else if (messages.length === 0) {
-      setMessages(welcomeBlocks());
-    }
-  }, [messages.length]);
+  const enterChat = useCallback(
+    (title: string, initial?: ConsultationBlock[]) => {
+      setChatTitle(title);
+      setMode('chat');
+      setIsTyping(false);
+      if (initial) {
+        setMessages(initial);
+      } else if (messagesRef.current.length === 0) {
+        setMessages(welcomeBlocks());
+      }
+    },
+    [],
+  );
 
   const backToHub = useCallback(() => {
     setMode('hub');
@@ -55,10 +97,12 @@ export function useSpecialistSession() {
   const respondWithBlocks = useCallback(
     (blocks: ConsultationBlock[], delay = TYPING_MS) => {
       setIsTyping(true);
-      setMessages((prev) => [...prev.filter((m) => m.type !== 'typing'), { id: nextBlockId(), type: 'typing' }]);
+      setMessages((prev) => [
+        ...prev.filter((m) => m.type !== 'typing'),
+        { id: nextBlockId(), type: 'typing' },
+      ]);
 
       const t = setTimeout(() => {
-        setIsTyping(false);
         appendBlocks(blocks);
       }, delay);
       timers.current.push(t);
@@ -66,60 +110,93 @@ export function useSpecialistSession() {
     [appendBlocks],
   );
 
-  const sendBriefChip = useCallback(
-    (prompt: string) => {
-      enterChat('Skin brief');
-      respondWithBlocks(blocksForBriefChip(prompt));
-    },
-    [enterChat, respondWithBlocks],
-  );
-
-  /** Hub ask field — always starts a fresh chat thread. */
-  const startNewChat = useCallback(
-    (text: string) => {
+  const sendLive = useCallback(
+    async (text: string, title = 'Khumaar Specialist', resetThread = false) => {
       const trimmed = text.trim();
       if (!trimmed) return;
       clearTimers();
-      setIsTyping(false);
-      setChatTitle('Khumaar Specialist');
+      setChatTitle(title);
       setMode('chat');
-      setMessages([{ id: nextBlockId(), type: 'user', text: trimmed }]);
 
-      const replyBlocks = blocksForUserText(trimmed).filter((b) => b.type !== 'user');
+      const prior = resetThread ? [] : messagesRef.current;
+      const history = historyFromBlocks(prior);
+      const userBlock: ConsultationBlock = {
+        id: nextBlockId(),
+        type: 'user',
+        text: trimmed,
+      };
+
+      setMessages([...prior.filter((m) => m.type !== 'typing'), userBlock, { id: nextBlockId(), type: 'typing' }]);
       setIsTyping(true);
-      const t = setTimeout(() => {
+
+      try {
+        const reply = await invokeCoachChat(trimmed, history);
+        setMessages((prev) => [
+          ...prev.filter((m) => m.type !== 'typing'),
+          { id: nextBlockId(), type: 'specialist', text: reply },
+        ]);
+      } catch (error) {
+        console.warn('Coach chat error', error);
+        setMessages((prev) => [
+          ...prev.filter((m) => m.type !== 'typing'),
+          { id: nextBlockId(), type: 'specialist', text: COACH_ERROR },
+        ]);
+      } finally {
         setIsTyping(false);
-        setMessages((prev) => [...prev, ...replyBlocks]);
-      }, TYPING_MS);
-      timers.current.push(t);
+      }
     },
     [clearTimers],
   );
 
-  /** Continue the active chat thread. */
+  const sendBriefChip = useCallback(
+    (prompt: string) => {
+      void sendLive(prompt, 'Skin brief', true);
+    },
+    [sendLive],
+  );
+
+  const startNewChat = useCallback(
+    (text: string) => {
+      void sendLive(text, 'Khumaar Specialist', true);
+    },
+    [sendLive],
+  );
+
   const sendUserText = useCallback(
     (text: string) => {
       const trimmed = text.trim();
       if (!trimmed) return;
       if (mode !== 'chat') {
-        startNewChat(trimmed);
+        void sendLive(trimmed, 'Khumaar Specialist', true);
         return;
       }
-      setMessages((prev) => [...prev, { id: nextBlockId(), type: 'user', text: trimmed }]);
-      const replyBlocks = blocksForUserText(trimmed).filter((b) => b.type !== 'user');
-      respondWithBlocks(replyBlocks);
+      void sendLive(trimmed, chatTitle, false);
     },
-    [mode, respondWithBlocks, startNewChat],
+    [mode, chatTitle, sendLive],
   );
 
   const runQuickIntent = useCallback(
     (intentId: string) => {
+      if (intentId === 'flare') {
+        enterChat('Khumaar Specialist');
+        respondWithBlocks(blocksForFlare());
+        return;
+      }
+      const promptByIntent: Record<string, string> = {
+        routine: 'Help me adjust my routine based on my latest scan.',
+        compare: 'What changed in my skin since my last scan?',
+        products: 'Which product types fit my current focus points?',
+      };
+      const prompt = promptByIntent[intentId];
+      if (prompt) {
+        void sendLive(prompt, 'Khumaar Specialist', true);
+        return;
+      }
       enterChat('Khumaar Specialist');
       const blocks = blocksForQuickIntent(intentId);
       if (blocks) respondWithBlocks(blocks);
-      else if (intentId === 'flare') respondWithBlocks(blocksForFlare());
     },
-    [enterChat, respondWithBlocks],
+    [enterChat, respondWithBlocks, sendLive],
   );
 
   const openFeatureScan = useCallback(() => {
@@ -127,13 +204,12 @@ export function useSpecialistSession() {
   }, []);
 
   const openFeatureRoutine = useCallback(() => {
-    const blocks = blocksForQuickIntent('routine');
-    if (blocks) {
-      setChatTitle('Routine advisor');
-      setMode('chat');
-      setMessages(blocks);
-    }
-  }, []);
+    void sendLive(
+      'Coach me on my morning and night routine for today.',
+      'Routine advisor',
+      true,
+    );
+  }, [sendLive]);
 
   const openRecentActivity = useCallback(
     (activityId: string) => {

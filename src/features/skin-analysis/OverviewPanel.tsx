@@ -5,17 +5,29 @@ import { Card, Pill, Text } from '@/components/ui';
 import { Lightning } from '@/components/icons';
 import {
   SkinHealthAnalysis,
-  scanSummary,
-  skinMetrics,
+  scanSummary as defaultSummary,
+  skinMetrics as defaultMetrics,
   toneColor,
   toneSoft,
+  type ScanSummary,
+  type SkinMetric,
 } from '@/features/skin-profile';
 import { palette, radii, spacing } from '@/theme';
 
 import { PanelHeading } from './PanelHeading';
 
+type Props = {
+  summary?: ScanSummary | null;
+  metrics?: SkinMetric[];
+};
+
 /** Overview tab — plain-language summary of the latest scan + skin metrics. */
-export function OverviewPanel() {
+export function OverviewPanel({
+  summary = defaultSummary,
+  metrics = defaultMetrics,
+}: Props) {
+  const data = summary ?? defaultSummary;
+
   return (
     <View style={styles.panel}>
       <PanelHeading title="Your skin today" subtitle="AI summary of your latest scan" />
@@ -25,29 +37,29 @@ export function OverviewPanel() {
           <View style={styles.scoreRow}>
             <View style={styles.scoreValue}>
               <Text variant="displayLg" color="textPrimary">
-                {scanSummary.score}
+                {data.score}
               </Text>
               <Text variant="body" color="textTertiary">
-                {`/ ${scanSummary.total}`}
+                {`/ ${data.total}`}
               </Text>
             </View>
             <View style={styles.statusCol}>
               <View style={styles.deltaRow}>
                 <Lightning size={14} color={palette.accent.success} />
                 <Text variant="captionMedium" color={palette.accent.success}>
-                  {scanSummary.deltaLabel}
+                  {data.deltaLabel}
                 </Text>
               </View>
               <Pill paddingX={10} paddingY={5} background={palette.brand[50]}>
                 <Text variant="metricSm" color={palette.brand[700]}>
-                  {scanSummary.statusLabel}
+                  {data.statusLabel}
                 </Text>
               </Pill>
             </View>
           </View>
 
           <Text variant="body" color="textSecondary" style={styles.headline}>
-            {scanSummary.headline}
+            {data.headline}
           </Text>
 
           <View style={styles.chipsRow}>
@@ -56,7 +68,7 @@ export function OverviewPanel() {
                 Improving
               </Text>
               <Text variant="captionMedium" color={toneColor.good}>
-                {scanSummary.topImprovement}
+                {data.topImprovement}
               </Text>
             </View>
             <View style={[styles.insightChip, { backgroundColor: toneSoft.improve }]}>
@@ -64,7 +76,7 @@ export function OverviewPanel() {
                 Focus
               </Text>
               <Text variant="captionMedium" color={toneColor.improve}>
-                {scanSummary.topConcern}
+                {data.topConcern}
               </Text>
             </View>
           </View>
@@ -75,7 +87,7 @@ export function OverviewPanel() {
         <Text variant="stepTitle" color="textPrimary">
           Skin health
         </Text>
-        <SkinHealthAnalysis metrics={skinMetrics} />
+        <SkinHealthAnalysis metrics={metrics.length ? metrics : defaultMetrics} />
       </Animated.View>
     </View>
   );

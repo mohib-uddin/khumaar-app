@@ -24,6 +24,34 @@ export type AnalysisMetric = {
   tone: 'good' | 'average' | 'improve';
 };
 
+export type RoutinePlanStep = {
+  id: string;
+  title: string;
+  description: string;
+  kind: 'skincare' | 'exercise';
+};
+
+export type RoutinePlanBlock = {
+  title: string;
+  subtitle: string;
+  steps: RoutinePlanStep[];
+};
+
+export type FocusPointStatus = 'done' | 'active' | 'pending';
+
+export type FocusPoint = {
+  key: string;
+  label: string;
+  status: FocusPointStatus;
+};
+
+export type RoutinePlan = {
+  morning: RoutinePlanBlock;
+  night: RoutinePlanBlock;
+  focus_points: FocusPoint[];
+  weekly_tip: string;
+};
+
 export type ProfileRow = {
   id: string;
   display_name: string | null;
@@ -49,7 +77,25 @@ export type ScanAnalysisRow = {
   metrics: AnalysisMetric[];
   ritual_id: string;
   disclaimer: string;
+  routine_plan: RoutinePlan | null;
   raw: Record<string, unknown> | null;
+  created_at: string;
+};
+
+export type RoutineCompletionRow = {
+  id: string;
+  user_id: string;
+  routine_id: string;
+  step_id: string;
+  completed_on: string;
+  created_at: string;
+};
+
+export type CoachMessageRow = {
+  id: string;
+  user_id: string;
+  role: 'user' | 'assistant';
+  content: string;
   created_at: string;
 };
 
@@ -113,8 +159,34 @@ export type Database = {
         Insert: Omit<ScanAnalysisRow, 'id' | 'created_at'> & {
           id?: string;
           created_at?: string;
+          routine_plan?: RoutinePlan | null;
         };
         Update: Partial<ScanAnalysisRow>;
+        Relationships: [];
+      };
+      routine_completions: {
+        Row: RoutineCompletionRow;
+        Insert: {
+          id?: string;
+          user_id: string;
+          routine_id: string;
+          step_id: string;
+          completed_on?: string;
+          created_at?: string;
+        };
+        Update: Partial<RoutineCompletionRow>;
+        Relationships: [];
+      };
+      coach_messages: {
+        Row: CoachMessageRow;
+        Insert: {
+          id?: string;
+          user_id: string;
+          role: 'user' | 'assistant';
+          content: string;
+          created_at?: string;
+        };
+        Update: Partial<CoachMessageRow>;
         Relationships: [];
       };
     };

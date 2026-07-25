@@ -1,14 +1,17 @@
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Screen, Text } from '@/components/ui';
 import { HeaderBlur, SkinHealthCard } from '@/features/dashboard';
+import { signOut, useAuth } from '@/features/onboarding';
 import { facialRatios, scanSummary } from '@/features/skin-profile';
 import { layout, spacing } from '@/theme';
 
 import { HarmonyScoreCard } from './HarmonyScoreCard';
+import { ProfileActions } from './ProfileActions';
 import { ProfileAnalysisSection } from './ProfileAnalysisSection';
 import { ProfileGreeting } from './ProfileGreeting';
 import { ProfileHeader } from './ProfileHeader';
@@ -25,8 +28,38 @@ const enter = (index: number) =>
 export function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { profile } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
 
   const openScans = () => router.push('/scans');
+  const displayName =
+    profile?.display_name?.split(' ')[0] || profile?.display_name || 'there';
+
+  const handleSignOut = useCallback(() => {
+    Alert.alert('Log out', 'Sign out of Khumaar on this device?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Log out',
+        style: 'destructive',
+        onPress: () => {
+          void (async () => {
+            if (signingOut) return;
+            setSigningOut(true);
+            try {
+              await signOut();
+              router.replace('/onboarding');
+            } catch (error) {
+              Alert.alert(
+                'Could not log out',
+                error instanceof Error ? error.message : 'Try again in a moment.',
+              );
+              setSigningOut(false);
+            }
+          })();
+        },
+      },
+    ]);
+  }, [router, signingOut]);
 
   return (
     <Screen edges={['top', 'left', 'right']}>
@@ -44,7 +77,7 @@ export function ProfileScreen() {
 
         <View style={styles.afterHeader}>
           <Animated.View entering={enter(1)}>
-            <ProfileGreeting name="Micy" />
+            <ProfileGreeting name={displayName} />
           </Animated.View>
 
           <View style={styles.metricsSection}>
@@ -72,6 +105,19 @@ export function ProfileScreen() {
 
           <Animated.View entering={enter(4)}>
             <ProfileAnalysisSection onViewScans={openScans} />
+          </Animated.View>
+
+          <Animated.View entering={enter(5)}>
+            <ProfileActions
+              actions={[
+                {
+                  id: 'logout',
+                  label: signingOut ? 'Logging out…' : 'Log out',
+                  caption: 'Sign out of your account on this device',
+                  onPress: signingOut ? undefined : handleSignOut,
+                },
+              ]}
+            />
           </Animated.View>
         </View>
       </ScrollView>
