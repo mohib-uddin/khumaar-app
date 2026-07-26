@@ -26,11 +26,57 @@ type AnalysisRow = {
   } | null;
 };
 
+const FREE_SPECIALIST_MESSAGES_PER_DAY = 3;
+const ENTITLEMENT_PRO = 'pro';
+
 function corsHeaders() {
   return {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   };
+}
+
+function startOfUtcDayIso(): string {
+  const now = new Date();
+  return new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+  ).toISOString();
+}
+
+async function hasActiveProEntitlement(appUserId: string): Promise<boolean | null> {
+  const secret = Deno.env.get('REVENUECAT_SECRET_API_KEY')?.trim();
+  if (!secret) {
+    console.warn('REVENUECAT_SECRET_API_KEY not configured — skipping Pro check');
+    return null;
+  }
+
+  try {
+    const res = await fetch(
+      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(appUserId)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${secret}`,
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+    if (!res.ok) {
+      console.error('RevenueCat subscriber lookup failed', res.status, await res.text());
+      return null;
+    }
+    const json = (await res.json()) as {
+      subscriber?: {
+        entitlements?: Record<string, { expires_date?: string | null }>;
+      };
+    };
+    const entitlement = json.subscriber?.entitlements?.[ENTITLEMENT_PRO];
+    if (!entitlement) return false;
+    if (entitlement.expires_date == null) return true;
+    return new Date(entitlement.expires_date).getTime() > Date.now();
+  } catch (error) {
+    console.error('RevenueCat subscriber lookup error', error);
+    return null;
+  }
 }
 
 function resolveGeminiApiKey(): string | undefined {
@@ -203,6 +249,35 @@ Deno.serve(async (req) => {
         status: 400,
         headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
       });
+    }
+
+    const { count: usedToday, error: quotaError } = await admin
+      .from('coach_messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('role', 'user')
+      .gte('created_at', startOfUtcDayIso());
+
+    if (quotaError) {
+      console.error('coach quota count failed', quotaError);
+    } else if ((usedToday ?? 0) >= FREE_SPECIALIST_MESSAGES_PER_DAY) {
+      const isPro = await hasActiveProEntitlement(user.id);
+      // null = secret missing / RC unreachable → fail open (client still gates).
+      // false = confirmed free → block.
+      if (isPro === false) {
+        return new Response(
+          JSON.stringify({
+            error: 'PRO_REQUIRED',
+            code: 'PRO_REQUIRED',
+            limit: FREE_SPECIALIST_MESSAGES_PER_DAY,
+            used: usedToday ?? 0,
+          }),
+          {
+            status: 402,
+            headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
+          },
+        );
+      }
     }
 
     const history: HistoryTurn[] = Array.isArray(body?.history)

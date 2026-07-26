@@ -21,6 +21,7 @@ import {
   scoreStatus,
   useWeeklyActivityData,
 } from '@/features/dashboard/hooks/useWeeklyActivityData';
+import { useOpenWeeklyScan } from '@/features/billing';
 import { useAuth } from '@/features/onboarding';
 import { layout, spacing } from '@/theme';
 
@@ -47,7 +48,7 @@ export default function DashboardScreen() {
     profile?.display_name ||
     'there';
 
-  const openScan = () => router.push('/scan/weekly');
+  const openScan = useOpenWeeklyScan();
 
   return (
     <Screen edges={['top', 'left', 'right']}>

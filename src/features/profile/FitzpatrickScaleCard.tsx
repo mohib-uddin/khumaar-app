@@ -97,7 +97,7 @@ export function FitzpatrickScaleCard({ type, onScan, onPressColors }: Props) {
             fullWidth
           />
           <Text variant="caption" color={palette.ink[300]} style={styles.ctaCaption}>
-            Stylist palette for your phototype
+            Stylist palette for your phototype · Khumaar Pro
           </Text>
         </View>
       ) : null}

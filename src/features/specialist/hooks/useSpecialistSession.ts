@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 
+import { openProPaywall } from '@/features/billing';
 import { getSupabase } from '@/lib/supabase';
 
 import {
@@ -14,6 +15,8 @@ import type { ConsultationBlock, TriageLevel } from '../types';
 const TYPING_MS = 900;
 const COACH_ERROR =
   'Could not reach the coach. Check your connection and try again.';
+const PRO_REQUIRED_MESSAGE =
+  'You’ve used today’s free specialist messages. Upgrade to Khumaar Pro for unlimited chat.';
 
 export type SpecialistMode = 'hub' | 'chat';
 
@@ -23,6 +26,13 @@ type CoachChatResult = {
   reply: string;
   threadId: string | null;
 };
+
+class ProRequiredError extends Error {
+  constructor() {
+    super('PRO_REQUIRED');
+    this.name = 'ProRequiredError';
+  }
+}
 
 function historyFromBlocks(blocks: ConsultationBlock[]): HistoryTurn[] {
   const turns: HistoryTurn[] = [];
@@ -57,10 +67,20 @@ async function invokeCoachChat(
     thread_id?: string;
     error?: string;
     detail?: string;
+    code?: string;
   } | null;
+
+  if (payload?.code === 'PRO_REQUIRED') {
+    throw new ProRequiredError();
+  }
+
   if (error) {
     const detail = payload?.detail || payload?.error;
-    throw new Error(detail ? `${error.message}: ${detail}` : error.message);
+    const message = detail ? `${error.message}: ${detail}` : error.message;
+    if (message.includes('PRO_REQUIRED') || payload?.error === 'PRO_REQUIRED') {
+      throw new ProRequiredError();
+    }
+    throw new Error(message);
   }
 
   const reply = payload?.reply?.trim();
@@ -169,10 +189,18 @@ export function useSpecialistSession() {
         ]);
       } catch (error) {
         console.warn('Coach chat error', error);
-        setMessages((prev) => [
-          ...prev.filter((m) => m.type !== 'typing'),
-          { id: nextBlockId(), type: 'specialist', text: COACH_ERROR },
-        ]);
+        if (error instanceof ProRequiredError) {
+          openProPaywall('chat');
+          setMessages([
+            ...prior.filter((m) => m.type !== 'typing'),
+            { id: nextBlockId(), type: 'specialist', text: PRO_REQUIRED_MESSAGE },
+          ]);
+        } else {
+          setMessages((prev) => [
+            ...prev.filter((m) => m.type !== 'typing'),
+            { id: nextBlockId(), type: 'specialist', text: COACH_ERROR },
+          ]);
+        }
       } finally {
         setIsTyping(false);
       }

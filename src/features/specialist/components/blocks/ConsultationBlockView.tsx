@@ -5,6 +5,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ScanFace } from '@/components/icons';
 import { Card, GradientIconButton, PressableScale, Text } from '@/components/ui';
+import { useOpenWeeklyScan } from '@/features/billing';
 import { SymptomMetricRow } from '@/features/skin-analysis/SymptomMetricRow';
 import { palette, radii, spacing } from '@/theme';
 
@@ -43,7 +44,8 @@ function SpecialistRow({ children }: { children: React.ReactNode }) {
 
 export function ConsultationBlockView({ block, index, onScanPress, onTriageSelect }: Props) {
   const router = useRouter();
-  const startScan = onScanPress ?? (() => router.push('/scan/weekly'));
+  const openWeeklyScan = useOpenWeeklyScan();
+  const startScan = onScanPress ?? openWeeklyScan;
 
   switch (block.type) {
     case 'user':

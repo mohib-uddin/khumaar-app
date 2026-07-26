@@ -6,6 +6,7 @@ import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { PurchasesProvider } from '@/features/billing';
 import { AuthProvider } from '@/features/onboarding';
 import { lufgaFonts, palette } from '@/theme';
 import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
@@ -59,6 +60,15 @@ function RootStack() {
             gestureDirection: 'vertical',
           }}
         />
+        <Stack.Screen
+          name="paywall"
+          options={{
+            animation: 'slide_from_bottom',
+            animationDuration: 340,
+            gestureEnabled: true,
+            gestureDirection: 'vertical',
+          }}
+        />
       </Stack>
     </>
   );
@@ -86,7 +96,9 @@ export default function RootLayout() {
             until the dark variant is approved. */}
         <ThemeProvider override="light">
           <AuthProvider>
-            <RootStack />
+            <PurchasesProvider>
+              <RootStack />
+            </PurchasesProvider>
           </AuthProvider>
         </ThemeProvider>
       </SafeAreaProvider>

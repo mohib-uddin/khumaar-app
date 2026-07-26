@@ -5,6 +5,12 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EmptyStateCard, Screen, Text } from '@/components/ui';
+import {
+  openProPaywall,
+  restorePurchases,
+  useOpenWeeklyScan,
+  usePurchases,
+} from '@/features/billing';
 import { HeaderBlur, SkinHealthCard } from '@/features/dashboard';
 import { useLatestAnalysis } from '@/features/dashboard/hooks/useLatestAnalysis';
 import {
@@ -15,7 +21,7 @@ import { signOut, useAuth } from '@/features/onboarding';
 import { isStylePalette } from '@/lib/database.types';
 import { layout, spacing } from '@/theme';
 
-import { canUseColorStylist } from './canUseColorStylist';
+import { useCanUseColorStylist } from './canUseColorStylist';
 import { FashionCompatibilitySheet } from './FashionCompatibilitySheet';
 import { FitzpatrickScaleCard } from './FitzpatrickScaleCard';
 import { ProfileActions } from './ProfileActions';
@@ -40,13 +46,32 @@ export function ProfileScreen() {
   const router = useRouter();
   const { profile, refreshProfile, user } = useAuth();
   const { analysis } = useLatestAnalysis();
+  const { isPro, refresh: refreshPurchases } = usePurchases();
+  const canColorEdit = useCanUseColorStylist();
+  const openScan = useOpenWeeklyScan();
   const [signingOut, setSigningOut] = useState(false);
   const [colorsOpen, setColorsOpen] = useState(false);
+  const [restoring, setRestoring] = useState(false);
 
   const openScans = () => router.push('/scans');
-  const openScan = () => router.push('/scan/weekly');
   const displayName =
     profile?.display_name?.split(' ')[0] || profile?.display_name || 'there';
+
+  const handleRestore = useCallback(() => {
+    if (restoring) return;
+    void (async () => {
+      setRestoring(true);
+      const ok = await restorePurchases();
+      await refreshPurchases();
+      setRestoring(false);
+      Alert.alert(
+        ok ? 'Restored' : 'Nothing to restore',
+        ok
+          ? 'Your purchases were restored.'
+          : 'No active purchases found for this account.',
+      );
+    })();
+  }, [restoring, refreshPurchases]);
 
   const handleSignOut = useCallback(() => {
     Alert.alert('Log out', 'Sign out of Khumaar on this device?', [
@@ -127,8 +152,14 @@ export function ProfileScreen() {
               type={profile?.fitzpatrick_type ?? null}
               onScan={!profile?.fitzpatrick_type ? openScan : undefined}
               onPressColors={
-                profile?.fitzpatrick_type && canUseColorStylist()
-                  ? () => setColorsOpen(true)
+                profile?.fitzpatrick_type
+                  ? () => {
+                      if (!canColorEdit) {
+                        openProPaywall('color');
+                        return;
+                      }
+                      setColorsOpen(true);
+                    }
                   : undefined
               }
             />
@@ -152,6 +183,22 @@ export function ProfileScreen() {
           <Animated.View entering={enter(6)}>
             <ProfileActions
               actions={[
+                ...(isPro
+                  ? []
+                  : [
+                      {
+                        id: 'upgrade',
+                        label: 'Khumaar Pro',
+                        caption: 'Weekly scans, Color Edit, unlimited chat',
+                        onPress: () => openProPaywall('generic'),
+                      },
+                    ]),
+                {
+                  id: 'restore',
+                  label: restoring ? 'Restoring…' : 'Restore purchases',
+                  caption: 'Recover Pro access from this store account',
+                  onPress: restoring ? undefined : handleRestore,
+                },
                 {
                   id: 'logout',
                   label: signingOut ? 'Logging out…' : 'Log out',

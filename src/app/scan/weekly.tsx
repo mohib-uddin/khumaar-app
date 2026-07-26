@@ -1,8 +1,9 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { Screen, Text } from '@/components/ui';
+import { openProPaywall, useFeatureAccess } from '@/features/billing';
 import {
   invokeOnboardingAnalyze,
   type ScanPose,
@@ -23,8 +24,18 @@ function createBatchId() {
 export default function WeeklyScanScreen() {
   const router = useRouter();
   const { user, refreshProfile } = useAuth();
+  const { ready, canWeeklyScan } = useFeatureAccess();
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<'scan' | 'upload' | 'analyze'>('scan');
+
+  useEffect(() => {
+    if (!ready) return;
+    if (!canWeeklyScan) {
+      openProPaywall('scan');
+      if (router.canGoBack()) router.back();
+      else router.replace('/');
+    }
+  }, [ready, canWeeklyScan, router]);
 
   const onComplete = async (captures: Record<ScanPose, string>) => {
     if (!user) {

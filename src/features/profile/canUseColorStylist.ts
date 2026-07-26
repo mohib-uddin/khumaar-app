@@ -1,7 +1,7 @@
-/**
- * Paywall gate for the color stylist.
- * Swap to RevenueCat / entitlement check later — keep CTA + regenerate behind this.
- */
-export function canUseColorStylist(): boolean {
-  return true;
+import { useFeatureAccess } from '@/features/billing';
+
+/** Color Edit requires Khumaar Pro. */
+export function useCanUseColorStylist(): boolean {
+  const { canColorEdit } = useFeatureAccess();
+  return canColorEdit;
 }

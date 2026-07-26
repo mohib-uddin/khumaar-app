@@ -5,6 +5,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EmptyStateCard, Screen } from '@/components/ui';
+import { useOpenWeeklyScan } from '@/features/billing';
 import { HeaderBlur } from '@/features/dashboard';
 import { useLatestAnalysis } from '@/features/dashboard/hooks/useLatestAnalysis';
 import { useAuth } from '@/features/onboarding';
@@ -32,6 +33,7 @@ const enter = (index: number) =>
 export default function RoutinesScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const openScan = useOpenWeeklyScan();
   const { profile } = useAuth();
   const { analysis } = useLatestAnalysis();
   const { overrides, toggleStep } = useRoutineCompletions();
@@ -85,7 +87,7 @@ export default function RoutinesScreen() {
                   title="Scan to unlock your routine"
                   caption="Your morning and night steps appear after a skin analysis."
                   actionLabel="Start scan"
-                  onAction={() => router.push('/scan/weekly')}
+                  onAction={openScan}
                 />
               </Animated.View>
             ) : (

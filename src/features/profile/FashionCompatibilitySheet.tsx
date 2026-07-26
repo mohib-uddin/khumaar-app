@@ -30,7 +30,7 @@ import {
 } from '@/lib/database.types';
 import { layout, palette, radii, shadows, spacing } from '@/theme';
 
-import { canUseColorStylist } from './canUseColorStylist';
+import { useCanUseColorStylist } from './canUseColorStylist';
 import { undertoneLabel } from './colorPalettes';
 import { getFitzpatrickMeta } from './fitzpatrick';
 
@@ -72,6 +72,7 @@ export function FashionCompatibilitySheet({
 }: Props) {
   const insets = useSafeAreaInsets();
   const fitz = getFitzpatrickMeta(fitzpatrickType);
+  const canColorEdit = useCanUseColorStylist();
 
   const [paletteState, setPaletteState] = useState<StylePalette | null>(null);
   const [loadState, setLoadState] = useState<LoadState>('idle');
@@ -138,15 +139,15 @@ export function FashionCompatibilitySheet({
       return;
     }
 
-    if (!canUseColorStylist()) {
+    if (!canColorEdit) {
       setLoadState('error');
-      setErrorMessage('Color Edit is available with Khumaar Premium.');
+      setErrorMessage('Color Edit is available with Khumaar Pro.');
       return;
     }
 
     variationRef.current = Date.now() % 10000;
     void fetchLook(variationRef.current);
-  }, [visible, fitzpatrickType, savedPalette, gender, fetchLook]);
+  }, [visible, fitzpatrickType, savedPalette, gender, canColorEdit, fetchLook]);
 
   const handleSaveGender = useCallback(async () => {
     if (!userId || !pickedGender || savingGender) return;
@@ -167,7 +168,7 @@ export function FashionCompatibilitySheet({
 
   const handleSave = useCallback(async () => {
     if (!userId || !paletteState || saving) return;
-    if (!canUseColorStylist()) return;
+    if (!canColorEdit) return;
     setSaving(true);
     try {
       await saveStylePalette(userId, paletteState);
@@ -180,11 +181,11 @@ export function FashionCompatibilitySheet({
     } finally {
       setSaving(false);
     }
-  }, [userId, paletteState, saving, onPaletteSaved]);
+  }, [userId, paletteState, saving, canColorEdit, onPaletteSaved]);
 
   const handleRegenerate = useCallback(() => {
-    if (!canUseColorStylist()) {
-      setErrorMessage('Color Edit is available with Khumaar Premium.');
+    if (!canColorEdit) {
+      setErrorMessage('Color Edit is available with Khumaar Pro.');
       return;
     }
     if (!gender) {
@@ -193,7 +194,7 @@ export function FashionCompatibilitySheet({
     }
     variationRef.current = (variationRef.current + 37) % 10000;
     void fetchLook(variationRef.current);
-  }, [fetchLook, gender]);
+  }, [fetchLook, gender, canColorEdit]);
 
   const toneForPill =
     paletteState?.undertone_read ?? undertone ?? null;

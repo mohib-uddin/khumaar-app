@@ -18,6 +18,7 @@ type Props = {
   onBack: () => void;
   onSend: (text: string) => void;
   onTriageSelect: (level: TriageLevel) => void;
+  remainingMessages?: number;
 };
 
 export function SpecialistChat({
@@ -27,6 +28,7 @@ export function SpecialistChat({
   onBack,
   onSend,
   onTriageSelect,
+  remainingMessages,
 }: Props) {
   const insets = useSafeAreaInsets();
   const listRef = useRef<FlatList<ConsultationBlock>>(null);
@@ -64,7 +66,7 @@ export function SpecialistChat({
           />
         )}
       />
-      <SpecialistComposer onSend={onSend} />
+      <SpecialistComposer onSend={onSend} remainingMessages={remainingMessages} />
     </View>
   );
 }

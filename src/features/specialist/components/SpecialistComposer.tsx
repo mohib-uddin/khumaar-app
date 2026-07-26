@@ -3,7 +3,7 @@ import { Platform, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Microphone, Paperclip, PaperPlane, Plus } from '@/components/icons';
-import { Card, PressableScale } from '@/components/ui';
+import { Card, PressableScale, Text } from '@/components/ui';
 import { palette, radii, spacing, tabBarDock } from '@/theme';
 
 type Props = {
@@ -11,6 +11,8 @@ type Props = {
   onAttachScan?: () => void;
   /** Hub: home entry. Chat: active thread. */
   variant?: 'hub' | 'chat';
+  /** Free-tier remaining messages (omit / Infinity when Pro). */
+  remainingMessages?: number;
 };
 
 const PLACEHOLDER = 'Type your message…';
@@ -20,11 +22,19 @@ const ORB_SIZE = 52;
 /** Same dark pill as bottom tab segmented track. */
 const MIC_ORB_BG = 'rgba(47, 49, 49, 0.92)';
 
-export function SpecialistComposer({ onSend, onAttachScan, variant = 'chat' }: Props) {
+export function SpecialistComposer({
+  onSend,
+  onAttachScan,
+  variant = 'chat',
+  remainingMessages,
+}: Props) {
   const insets = useSafeAreaInsets();
   const [text, setText] = useState('');
   const isHub = variant === 'hub';
   const hasText = Boolean(text.trim());
+  const showQuota =
+    typeof remainingMessages === 'number' &&
+    Number.isFinite(remainingMessages);
 
   const handleSend = () => {
     const trimmed = text.trim();
@@ -41,6 +51,13 @@ export function SpecialistComposer({ onSend, onAttachScan, variant = 'chat' }: P
     <View
       pointerEvents="box-none"
       style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
+      {showQuota ? (
+        <Text variant="caption" color={palette.ink[300]} style={styles.quota}>
+          {remainingMessages <= 0
+            ? 'Free messages used today — upgrade for unlimited chat'
+            : `${remainingMessages} free message${remainingMessages === 1 ? '' : 's'} left today`}
+        </Text>
+      ) : null}
       <View style={styles.row}>
         <Card radius="pill" elevation="card" background={palette.white} style={styles.pill}>
           {showAttach ? (
@@ -101,6 +118,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: tabBarDock.hostPaddingX,
     paddingTop: spacing.md,
     backgroundColor: 'transparent',
+  },
+  quota: {
+    textAlign: 'center',
+    marginBottom: spacing.sm,
   },
   row: {
     flexDirection: 'row',

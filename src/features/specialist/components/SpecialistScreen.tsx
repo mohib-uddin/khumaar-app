@@ -3,6 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 
 import { Screen } from '@/components/ui';
+import { openProPaywall, useSpecialistQuota } from '@/features/billing';
 import { HeaderBlur } from '@/features/dashboard';
 import { useLatestAnalysis } from '@/features/dashboard/hooks/useLatestAnalysis';
 import { palette } from '@/theme';
@@ -18,6 +19,7 @@ export function SpecialistScreen() {
   const router = useRouter();
   const { analysis } = useLatestAnalysis();
   const { items: history, refresh: refreshHistory } = useCoachHistory();
+  const quota = useSpecialistQuota();
   const session = useSpecialistSession();
   const {
     mode,
@@ -41,6 +43,15 @@ export function SpecialistScreen() {
     if (mode === 'hub') void refreshHistory();
   }, [mode, refreshHistory]);
 
+  const guardSend = (send: (text: string) => void) => (text: string) => {
+    if (!quota.canSend) {
+      openProPaywall('chat');
+      return;
+    }
+    quota.recordLocalSend();
+    send(text);
+  };
+
   const handleExit = () => {
     if (mode === 'chat') {
       backToHub();
@@ -49,6 +60,8 @@ export function SpecialistScreen() {
     if (router.canGoBack()) router.back();
     else router.replace('/');
   };
+
+  const remaining = quota.isPro ? undefined : quota.remaining;
 
   return (
     <Screen edges={['top', 'left', 'right']} style={styles.screen}>
@@ -63,12 +76,23 @@ export function SpecialistScreen() {
               onBack={handleExit}
               chips={chips}
               history={history}
-              onBriefMetric={sendBriefChip}
+              onBriefMetric={(prompt) => {
+                if (!quota.canSend) {
+                  openProPaywall('chat');
+                  return;
+                }
+                quota.recordLocalSend();
+                sendBriefChip(prompt);
+              }}
               onOpenHistory={(item) =>
                 openCoachHistory(item.title, item.blocks, item.threadId)
               }
             />
-            <SpecialistComposer variant="hub" onSend={startNewChat} />
+            <SpecialistComposer
+              variant="hub"
+              onSend={guardSend(startNewChat)}
+              remainingMessages={remaining}
+            />
           </>
         ) : (
           <SpecialistChat
@@ -76,8 +100,9 @@ export function SpecialistScreen() {
             messages={messages}
             isTyping={isTyping}
             onBack={backToHub}
-            onSend={sendUserText}
+            onSend={guardSend(sendUserText)}
             onTriageSelect={selectTriage}
+            remainingMessages={remaining}
           />
         )}
       </KeyboardAvoidingView>
