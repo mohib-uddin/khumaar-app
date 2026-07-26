@@ -1,9 +1,13 @@
-import { Platform } from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 import Purchases, { LOG_LEVEL } from 'react-native-purchases';
 
 import { env } from '@/lib/env';
 
 let configured = false;
+
+function hasNativePurchases(): boolean {
+  return Boolean(NativeModules.RNPurchases);
+}
 
 /** Configure RevenueCat once per app launch. Safe to call repeatedly. */
 export function configurePurchases(): boolean {
@@ -15,18 +19,30 @@ export function configurePurchases(): boolean {
     return false;
   }
 
-  if (__DEV__) {
-    Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+  if (!hasNativePurchases()) {
+    console.warn(
+      '[Purchases] Native module missing — rebuild the iOS/Android development client after installing react-native-purchases.',
+    );
+    return false;
   }
 
-  Purchases.configure({ apiKey });
-  configured = true;
+  try {
+    if (__DEV__) {
+      Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+    }
 
-  if (__DEV__) {
-    console.log(`[Purchases] configured (${Platform.OS})`);
+    Purchases.configure({ apiKey });
+    configured = true;
+
+    if (__DEV__) {
+      console.log(`[Purchases] configured (${Platform.OS})`);
+    }
+
+    return true;
+  } catch (error) {
+    console.warn('[Purchases] configure failed', error);
+    return false;
   }
-
-  return true;
 }
 
 export function isPurchasesConfigured(): boolean {
